@@ -1,0 +1,180 @@
+// Quorum Meeting Recorder - Database Schema
+// Multi-tenant meeting recording and management system
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum UserRole {
+  ADMIN   // Full organization access
+  MEMBER  // Can create and manage meetings
+  VIEWER  // Read-only access
+}
+
+enum Platform {
+  TEAMS
+  SLACK
+  YOUTUBE
+}
+
+enum MeetingStatus {
+  PENDING     // Scheduled, not started
+  RECORDING   // Currently recording
+  PROCESSING  // Recording complete, processing artifacts
+  READY       // All artifacts ready
+  FAILED      // Recording or processing failed
+}
+
+enum EncodingStatus {
+  PENDING     // Waiting to encode
+  PROCESSING  // Currently encoding
+  READY       // Encoding complete
+  FAILED      // Encoding failed
+}
+
+// ============================================================================
+// CORE ENTITIES
+// ============================================================================
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  users       User[]
+  meetings    Meeting[]
+  botAccounts BotAccount[]
+  recordings  Recording[]
+  auditLogs   AuditLog[]
+
+  @@index([slug])
+  @@map("organizations")
+}
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  name           String
+  organizationId String
+  role           UserRole @default(MEMBER)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  auditLogs    AuditLog[]
+
+  @@index([organizationId])
+  @@index([email])
+  @@map("users")
+}
+
+model BotAccount {
+  id             String   @id @default(cuid())
+  organizationId String
+  platform       Platform
+  credentials    Json     // Encrypted authentication state (tokens, cookies, etc.)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  meetings     Meeting[]
+
+  @@index([organizationId])
+  @@index([platform])
+  @@map("bot_accounts")
+}
+
+model Meeting {
+  id             String        @id @default(cuid())
+  organizationId String
+  botAccountId   String?
+  platform       Platform
+  url            String
+  scheduledStart DateTime
+  scheduledEnd   DateTime?
+  duration       Int?          // Duration in minutes (nullable until recording complete)
+  status         MeetingStatus @default(PENDING)
+  containerId    String?       // Docker container ID for active recording
+  error          String?       // Error message if status is FAILED
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  botAccount   BotAccount?  @relation(fields: [botAccountId], references: [id], onDelete: SetNull)
+  recording    Recording?
+
+  @@index([organizationId])
+  @@index([status])
+  @@index([scheduledStart])
+  @@index([platform])
+  @@index([containerId])
+  @@map("meetings")
+}
+
+model Recording {
+  id                String          @id @default(cuid())
+  meetingId         String          @unique
+  organizationId    String
+  rawVideoUrl       String?         // S3/storage URL for raw recording
+  encodedVideoUrl   String?         // S3/storage URL for encoded video
+  harFileUrl        String?         // S3/storage URL for HAR file (network logs)
+  rawVideoSize      BigInt?         // Size in bytes
+  encodedVideoSize  BigInt?         // Size in bytes
+  encodingStatus    EncodingStatus  @default(PENDING)
+  encodingError     String?         // Error message if encoding failed
+  metadata          Json?           // Participant info, meeting metadata, etc.
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  deletedAt         DateTime?       // Soft delete timestamp
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  meeting      Meeting      @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([encodingStatus])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@map("recordings")
+}
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String?  // Nullable for system actions
+  action         String   // e.g., "meeting.created", "recording.deleted"
+  entity         String   // e.g., "Meeting", "Recording"
+  entityId       String   // ID of the affected entity
+  changes        Json?    // Before/after changes or action details
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([action])
+  @@index([entity])
+  @@index([entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

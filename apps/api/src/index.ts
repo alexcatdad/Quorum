@@ -16,6 +16,9 @@ import { recordingsRoutes } from "./routes/recordings";
 import { authRoutes } from "./routes/auth";
 import { jobsRoutes } from "./routes/jobs";
 import { gdprRoutes } from "./routes/gdpr";
+import { websocketService } from "./services/websocket";
+import { rateLimit } from "./middleware/rate-limit";
+import { initializeMinIOBuckets } from "./services/minio-init";
 import "./services/retention"; // Initialize retention policy scheduler
 
 // Load environment variables
@@ -23,6 +26,12 @@ const env = loadEnv();
 
 // Initialize Sentry
 initSentry(env);
+
+// Initialize MinIO buckets
+initializeMinIOBuckets(env).catch((error) => {
+	logger.error("Failed to initialize MinIO buckets", error);
+	// Continue anyway - buckets might already exist or will be created later
+});
 
 // Create Elysia app
 const app = new Elysia()
@@ -33,7 +42,13 @@ const app = new Elysia()
 		}),
 	)
 	.use(loggingMiddleware)
-	.use(errorHandler);
+	.use(errorHandler)
+	.use(
+		rateLimit({
+			windowMs: 15 * 60 * 1000, // 15 minutes
+			maxRequests: 100,
+		}),
+	);
 
 // Add Swagger documentation if enabled
 if (env.ENABLE_SWAGGER) {
@@ -88,6 +103,23 @@ app.use(meetingsRoutes);
 app.use(recordingsRoutes);
 app.use(jobsRoutes);
 app.use(gdprRoutes);
+
+// WebSocket endpoint
+app.ws("/ws", {
+	open(ws) {
+		const connectionId = websocketService.handleConnection(ws as any);
+		(ws as any).connectionId = connectionId;
+	},
+	message(ws, message) {
+		websocketService.handleMessage(ws as any, message.toString());
+	},
+	close(ws) {
+		const connectionId = (ws as any).connectionId;
+		if (connectionId) {
+			websocketService.handleDisconnection(connectionId);
+		}
+	},
+});
 
 // Start server
 app.listen(env.PORT, () => {

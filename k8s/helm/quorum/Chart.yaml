@@ -1,0 +1,18 @@
+apiVersion: v2
+name: quorum
+description: A Helm chart for Quorum - Distributed Meeting Recording System
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - recording
+  - meetings
+  - teams
+  - slack
+  - youtube
+home: https://github.com/your-org/quorum
+sources:
+  - https://github.com/your-org/quorum
+maintainers:
+  - name: Quorum Team
+    email: team@quorum.example.com

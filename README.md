@@ -50,9 +50,48 @@ A production-ready, multi-tenant SaaS application for automated recording of Mic
 
 ```bash
 bun install
-
-```bash
-bun run index.ts
 ```
 
-This project was created using `bun init` in bun v1.3.1. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+### 2. Start Infrastructure
+
+```bash
+docker-compose up -d
+```
+
+This starts:
+- PostgreSQL on `localhost:54320`
+- Redis on `localhost:63790`
+- MinIO API on `localhost:9100`, Console on `localhost:9101`
+
+### 3. Run Database Migrations
+
+```bash
+cd packages/db
+bunx prisma migrate deploy
+```
+
+### 4. Configure Environment
+
+```bash
+cp .env.example .env
+# Edit .env with your configuration
+```
+
+### 5. Start Services
+
+```bash
+# Terminal 1: API Server
+cd apps/api
+bun run dev
+
+# Terminal 2: Worker
+cd apps/worker
+bun run dev
+```
+
+### 6. Access Services
+
+- **API**: http://localhost:3000
+- **Swagger Docs**: http://localhost:3000/swagger
+- **Metrics**: http://localhost:3000/metrics
+- **MinIO Console**: http://localhost:9101 (minioadmin/minioadmin)

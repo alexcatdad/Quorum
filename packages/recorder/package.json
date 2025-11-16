@@ -1,0 +1,18 @@
+{
+	"name": "@quorum/recorder",
+	"version": "0.0.0",
+	"type": "module",
+	"private": true,
+	"scripts": {
+		"test": "bun test"
+	},
+	"dependencies": {
+		"@quorum/db": "workspace:*",
+		"@quorum/shared": "workspace:*",
+		"playwright": "^1.49.1",
+		"playwright-core": "^1.49.1"
+	},
+	"devDependencies": {
+		"@types/bun": "latest"
+	}
+}

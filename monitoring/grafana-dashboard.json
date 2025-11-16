@@ -1,0 +1,109 @@
+{
+  "dashboard": {
+    "title": "Quorum - Meeting Recording System",
+    "tags": ["quorum", "monitoring"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "HTTP Requests Total",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total[5m])",
+            "legendFormat": "{{method}} {{route}} - {{status}}"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+      },
+      {
+        "id": 2,
+        "title": "HTTP Request Duration",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "p95 - {{route}}"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "p99 - {{route}}"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
+      },
+      {
+        "id": 3,
+        "title": "Active Recordings",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(recordings_active)"
+          }
+        ],
+        "gridPos": { "h": 4, "w": 6, "x": 0, "y": 8 }
+      },
+      {
+        "id": 4,
+        "title": "Active Encodings",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(encodings_active)"
+          }
+        ],
+        "gridPos": { "h": 4, "w": 6, "x": 6, "y": 8 }
+      },
+      {
+        "id": 5,
+        "title": "Active Jobs",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "active_jobs",
+            "legendFormat": "{{queue}}"
+          }
+        ],
+        "gridPos": { "h": 4, "w": 12, "x": 12, "y": 8 }
+      },
+      {
+        "id": 6,
+        "title": "Jobs Processed",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(jobs_processed_total[5m])",
+            "legendFormat": "{{queue}} - {{status}}"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 }
+      },
+      {
+        "id": 7,
+        "title": "Job Processing Duration",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(job_processing_duration_seconds_bucket[5m]))",
+            "legendFormat": "p95 - {{queue}}"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 }
+      },
+      {
+        "id": 8,
+        "title": "Storage Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "storage_usage_bytes",
+            "legendFormat": "{{type}}"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 20 }
+      }
+    ],
+    "schemaVersion": 36,
+    "version": 1
+  }
+}

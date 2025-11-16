@@ -1,0 +1,15 @@
+{
+	"name": "@quorum/encoder",
+	"version": "0.0.0",
+	"type": "module",
+	"private": true,
+	"scripts": {
+		"test": "bun test"
+	},
+	"dependencies": {
+		"@quorum/shared": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/bun": "latest"
+	}
+}

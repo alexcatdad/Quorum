@@ -1,4 +1,10 @@
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
+import {
+	DeleteObjectCommand,
+	GetObjectCommand,
+	HeadObjectCommand,
+	PutObjectCommand,
+	S3Client,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import type { Env } from "../utils/env";
 import { logger } from "../utils/logger";
@@ -23,7 +29,11 @@ export class MinIOService {
 		logger.info(`MinIO service initialized: ${env.MINIO_ENDPOINT}:${env.MINIO_PORT}`);
 	}
 
-	async uploadFile(key: string, data: Buffer | Uint8Array | Blob, contentType?: string): Promise<void> {
+	async uploadFile(
+		key: string,
+		data: Buffer | Uint8Array | Blob,
+		contentType?: string,
+	): Promise<void> {
 		try {
 			await this.client.send(
 				new PutObjectCommand({
@@ -83,7 +93,7 @@ export class MinIOService {
 			);
 
 			return true;
-		} catch (error) {
+		} catch (_error) {
 			return false;
 		}
 	}

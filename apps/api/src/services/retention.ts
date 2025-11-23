@@ -67,7 +67,9 @@ export class RetentionService {
 		const cutoffDate = new Date();
 		cutoffDate.setDate(cutoffDate.getDate() - daysToRetain);
 
-		logger.info(`Starting permanent deletion of soft-deleted recordings older than ${daysToRetain} days`);
+		logger.info(
+			`Starting permanent deletion of soft-deleted recordings older than ${daysToRetain} days`,
+		);
 
 		const recordingsToDelete = await db.recording.findMany({
 			where: {
@@ -110,8 +112,8 @@ export class RetentionService {
 	}> {
 		logger.info("Running retention policy...");
 
-		const deletedRecordings = await this.deleteOldRecordings(30); // 30 days retention
-		const permanentlyDeleted = await this.permanentlyDeleteSoftDeleted(7); // 7 days grace period
+		const deletedRecordings = await RetentionService.deleteOldRecordings(30); // 30 days retention
+		const permanentlyDeleted = await RetentionService.permanentlyDeleteSoftDeleted(7); // 7 days grace period
 
 		logger.info("Retention policy completed", {
 			deletedRecordings,

@@ -1,8 +1,8 @@
-import { Elysia, t } from "elysia";
 import { db } from "@quorum/db";
+import { Elysia, t } from "elysia";
+import { calendarService, extractMeetingUrl } from "../services/calendar";
 import { NotFoundError } from "../types/errors";
 import { logger } from "../utils/logger";
-import { calendarService, extractMeetingUrl } from "../services/calendar";
 
 // Calendar provider enum
 const CalendarProviderEnum = t.Union([
@@ -186,7 +186,8 @@ export const calendarRoutes = new Elysia({ prefix: "/calendar" })
 			detail: {
 				tags: ["Calendar"],
 				summary: "Create calendar integration",
-				description: "Create a new calendar integration. For ICAL provider, calendarUrl is required.",
+				description:
+					"Create a new calendar integration. For ICAL provider, calendarUrl is required.",
 			},
 		},
 	)
@@ -356,11 +357,9 @@ export const calendarRoutes = new Elysia({ prefix: "/calendar" })
 				organizationId: t.Optional(t.String()),
 				integrationId: t.Optional(t.String()),
 				status: t.Optional(CalendarEventStatusEnum),
-				platform: t.Optional(t.Union([
-					t.Literal("TEAMS"),
-					t.Literal("SLACK"),
-					t.Literal("YOUTUBE"),
-				])),
+				platform: t.Optional(
+					t.Union([t.Literal("TEAMS"), t.Literal("SLACK"), t.Literal("YOUTUBE")]),
+				),
 				upcoming: t.Optional(t.Boolean()),
 				limit: t.Optional(t.Number({ minimum: 1, maximum: 100 })),
 				offset: t.Optional(t.Number({ minimum: 0 })),
@@ -502,10 +501,7 @@ export const calendarRoutes = new Elysia({ prefix: "/calendar" })
 	.get(
 		"/upcoming/:organizationId",
 		async ({ params: { organizationId }, query }) => {
-			const events = await calendarService.getUpcomingEvents(
-				organizationId,
-				query.hours || 24,
-			);
+			const events = await calendarService.getUpcomingEvents(organizationId, query.hours || 24);
 
 			return { data: events };
 		},

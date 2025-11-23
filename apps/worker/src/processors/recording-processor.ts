@@ -1,14 +1,17 @@
-import type { Job } from "bullmq";
+import { mkdir, readFile, stat } from "node:fs/promises";
 import { db } from "@quorum/db";
-import { TeamsRecorder, SlackRecorder, YouTubeRecorder, type RecordingResult } from "@quorum/recorder";
+import {
+	type RecordingResult,
+	SlackRecorder,
+	TeamsRecorder,
+	YouTubeRecorder,
+} from "@quorum/recorder";
+import type { Job } from "bullmq";
 import type { RecordingJobData } from "../../../api/src/services/queue";
-import { logger } from "../utils/logger";
-import { minioService } from "../services/minio";
+import { type StreamChunk, streamingService } from "../../../api/src/services/streaming";
 import { webhookService } from "../../../api/src/services/webhook";
-import { streamingService, type StreamChunk } from "../../../api/src/services/streaming";
-import { stat, readFile, watch } from "node:fs/promises";
-import { createReadStream } from "node:fs";
-import { mkdir } from "node:fs/promises";
+import { minioService } from "../services/minio";
+import { logger } from "../utils/logger";
 
 export async function processRecordingJob(job: Job<RecordingJobData>): Promise<void> {
 	const { meetingId, organizationId, meetingUrl, platform, botAccountId } = job.data;
@@ -59,18 +62,19 @@ export async function processRecordingJob(job: Job<RecordingJobData>): Promise<v
 		const recordingsDir = `./recordings/${organizationId}`;
 		await mkdir(recordingsDir, { recursive: true });
 		const outputPath = `${recordingsDir}/${meetingId}-${timestamp}.webm`;
-		const harPath = `${recordingsDir}/${meetingId}-${timestamp}.har`;
+		const _harPath = `${recordingsDir}/${meetingId}-${timestamp}.har`;
 
 		// Get active stream configs to determine chunk interval
 		const streamConfigs = await streamingService.getActiveConfigs(meetingId, organizationId);
-		const minChunkInterval = streamConfigs.length > 0
-			? Math.min(...streamConfigs.map((c) => c.chunkIntervalMs))
-			: 5000;
+		const minChunkInterval =
+			streamConfigs.length > 0 ? Math.min(...streamConfigs.map((c) => c.chunkIntervalMs)) : 5000;
 
 		// Set up real-time streaming if there are active configs
 		let lastStreamedSize = 0;
 		if (streamConfigs.length > 0) {
-			jobLogger.info(`Setting up real-time streaming with ${streamConfigs.length} configs, interval: ${minChunkInterval}ms`);
+			jobLogger.info(
+				`Setting up real-time streaming with ${streamConfigs.length} configs, interval: ${minChunkInterval}ms`,
+			);
 
 			streamingInterval = setInterval(async () => {
 				try {
@@ -79,7 +83,9 @@ export async function processRecordingJob(job: Job<RecordingJobData>): Promise<v
 					if (stats && stats.size > lastStreamedSize) {
 						// Read new chunk
 						const chunkSize = stats.size - lastStreamedSize;
-						const fileHandle = await Bun.file(outputPath).slice(lastStreamedSize, stats.size).arrayBuffer();
+						const fileHandle = await Bun.file(outputPath)
+							.slice(lastStreamedSize, stats.size)
+							.arrayBuffer();
 						const chunkData = Buffer.from(fileHandle);
 
 						const chunk: StreamChunk = {
@@ -100,7 +106,7 @@ export async function processRecordingJob(job: Job<RecordingJobData>): Promise<v
 						lastStreamedSize = stats.size;
 
 						// Update job progress based on estimated duration
-						const progress = Math.min(90, (chunkIndex * 10));
+						const progress = Math.min(90, chunkIndex * 10);
 						await job.updateProgress(progress);
 					}
 				} catch (error) {
@@ -159,7 +165,9 @@ export async function processRecordingJob(job: Job<RecordingJobData>): Promise<v
 			try {
 				const stats = await stat(outputPath).catch(() => null);
 				if (stats && stats.size > lastStreamedSize) {
-					const fileHandle = await Bun.file(outputPath).slice(lastStreamedSize, stats.size).arrayBuffer();
+					const fileHandle = await Bun.file(outputPath)
+						.slice(lastStreamedSize, stats.size)
+						.arrayBuffer();
 					const chunkData = Buffer.from(fileHandle);
 
 					const chunk: StreamChunk = {
@@ -282,16 +290,18 @@ export async function processRecordingJob(job: Job<RecordingJobData>): Promise<v
 		});
 
 		// Trigger webhook: meeting failed
-		await webhookService.triggerMeetingFailed(
-			organizationId,
-			meetingId,
-			error instanceof Error ? error.message : String(error),
-			{
-				platform,
-				meetingUrl,
-				failedAt: new Date().toISOString(),
-			},
-		).catch(() => {});
+		await webhookService
+			.triggerMeetingFailed(
+				organizationId,
+				meetingId,
+				error instanceof Error ? error.message : String(error),
+				{
+					platform,
+					meetingUrl,
+					failedAt: new Date().toISOString(),
+				},
+			)
+			.catch(() => {});
 
 		throw error;
 	}

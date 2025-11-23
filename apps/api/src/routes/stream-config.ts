@@ -1,8 +1,8 @@
-import { Elysia, t } from "elysia";
+import { randomBytes } from "node:crypto";
 import { db } from "@quorum/db";
+import { Elysia, t } from "elysia";
 import { NotFoundError } from "../types/errors";
 import { logger } from "../utils/logger";
-import { randomBytes } from "node:crypto";
 
 // Generate a secure random secret for stream authentication
 function generateStreamSecret(): string {
@@ -209,7 +209,8 @@ export const streamConfigRoutes = new Elysia({ prefix: "/stream-configs" })
 			detail: {
 				tags: ["StreamConfig"],
 				summary: "Create stream configuration",
-				description: "Create a new real-time streaming configuration. If no meetingId is specified, it applies as the organization default.",
+				description:
+					"Create a new real-time streaming configuration. If no meetingId is specified, it applies as the organization default.",
 			},
 		},
 	)
@@ -288,7 +289,8 @@ export const streamConfigRoutes = new Elysia({ prefix: "/stream-configs" })
 			detail: {
 				tags: ["StreamConfig"],
 				summary: "Update stream configuration",
-				description: "Update stream configuration settings. Set meetingId to null to make it an organization default.",
+				description:
+					"Update stream configuration settings. Set meetingId to null to make it an organization default.",
 			},
 		},
 	)
@@ -399,7 +401,8 @@ export const streamConfigRoutes = new Elysia({ prefix: "/stream-configs" })
 			detail: {
 				tags: ["StreamConfig"],
 				summary: "Get active stream configs for meeting",
-				description: "Get all active streaming configurations for a meeting, including organization defaults",
+				description:
+					"Get all active streaming configurations for a meeting, including organization defaults",
 			},
 		},
 	);

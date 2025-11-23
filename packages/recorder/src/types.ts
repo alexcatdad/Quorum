@@ -23,7 +23,17 @@ export interface Participant {
 }
 
 export interface ParticipantEvent {
-	type: "joined" | "left" | "speaking_start" | "speaking_end" | "muted" | "unmuted" | "video_on" | "video_off" | "presenting_start" | "presenting_end";
+	type:
+		| "joined"
+		| "left"
+		| "speaking_start"
+		| "speaking_end"
+		| "muted"
+		| "unmuted"
+		| "video_on"
+		| "video_off"
+		| "presenting_start"
+		| "presenting_end";
 	participant: Participant;
 	timestamp: string;
 }
@@ -50,5 +60,5 @@ export interface PlatformCredentials {
 // Callback for real-time participant updates
 export type ParticipantUpdateCallback = (
 	participants: Participant[],
-	event?: ParticipantEvent
+	event?: ParticipantEvent,
 ) => void;

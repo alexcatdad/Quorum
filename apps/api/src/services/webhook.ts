@@ -1,7 +1,7 @@
-import { db } from "@quorum/db";
-import type { WebhookEvent, Webhook, WebhookDelivery } from "@prisma/client";
 import { createHmac } from "node:crypto";
-import { logger, createChildLogger } from "../utils/logger";
+import type { Webhook, WebhookDelivery, WebhookEvent } from "@prisma/client";
+import { db } from "@quorum/db";
+import { createChildLogger } from "../utils/logger";
 
 const webhookLogger = createChildLogger("webhook");
 
@@ -46,7 +46,7 @@ async function deliverWebhook(
 		"X-Webhook-Event": payload.event,
 		"X-Webhook-Timestamp": payload.timestamp,
 		"X-Webhook-Id": webhook.id,
-		...(webhook.headers as Record<string, string> || {}),
+		...((webhook.headers as Record<string, string>) || {}),
 	};
 
 	let delivery: WebhookDelivery | null = null;
@@ -116,7 +116,7 @@ async function deliverWebhook(
 
 		// Retry if attempts remaining
 		if (attempt < webhook.retryCount) {
-			const backoffMs = Math.pow(2, attempt) * 1000; // Exponential backoff
+			const backoffMs = 2 ** attempt * 1000; // Exponential backoff
 			webhookLogger.info(`Retrying webhook in ${backoffMs}ms`, {
 				webhookId: webhook.id,
 				attempt: attempt + 1,
@@ -159,7 +159,7 @@ async function deliverWebhook(
 
 		// Retry if attempts remaining
 		if (attempt < webhook.retryCount) {
-			const backoffMs = Math.pow(2, attempt) * 1000;
+			const backoffMs = 2 ** attempt * 1000;
 			webhookLogger.info(`Retrying webhook in ${backoffMs}ms`, {
 				webhookId: webhook.id,
 				attempt: attempt + 1,
@@ -220,9 +220,7 @@ export class WebhookService {
 		};
 
 		// Deliver to all webhooks in parallel
-		const results = await Promise.all(
-			webhooks.map((webhook) => deliverWebhook(webhook, payload)),
-		);
+		const results = await Promise.all(webhooks.map((webhook) => deliverWebhook(webhook, payload)));
 
 		const successCount = results.filter((r) => r.success).length;
 		webhookLogger.info("Webhook batch completed", {
@@ -393,10 +391,7 @@ export class WebhookService {
 	/**
 	 * Get delivery history for a webhook
 	 */
-	async getDeliveryHistory(
-		webhookId: string,
-		limit: number = 50,
-	): Promise<WebhookDelivery[]> {
+	async getDeliveryHistory(webhookId: string, limit: number = 50): Promise<WebhookDelivery[]> {
 		return db.webhookDelivery.findMany({
 			where: { webhookId },
 			orderBy: { createdAt: "desc" },
@@ -437,9 +432,10 @@ export class WebhookService {
 			totalDeliveries,
 			successfulDeliveries,
 			failedDeliveries,
-			successRate: totalDeliveries > 0
-				? ((successfulDeliveries / totalDeliveries) * 100).toFixed(2) + "%"
-				: "N/A",
+			successRate:
+				totalDeliveries > 0
+					? `${((successfulDeliveries / totalDeliveries) * 100).toFixed(2)}%`
+					: "N/A",
 		};
 	}
 }

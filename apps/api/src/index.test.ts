@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeAll, afterAll } from "bun:test";
-import app from "./index";
+import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { db } from "@quorum/db";
+import app from "./index";
 
 describe("API Server", () => {
 	let organizationId: string;
-	let userId: string;
-	let token: string;
+	let _userId: string;
+	let _token: string;
 
 	beforeAll(async () => {
 		// Clean up test data
@@ -80,8 +80,8 @@ describe("API Server", () => {
 			expect(data.user.email).toBe("test@example.com");
 			expect(data.user.role).toBe("ADMIN");
 
-			token = data.token;
-			userId = data.user.id;
+			_token = data.token;
+			_userId = data.user.id;
 			organizationId = data.user.organizationId;
 		});
 
@@ -189,9 +189,7 @@ describe("API Server", () => {
 			expect(response.status).toBe(200);
 
 			const data: any = await response.json();
-			expect(data.data.meetingUrl).toBe(
-				"https://teams.microsoft.com/l/meetup-join/test",
-			);
+			expect(data.data.meetingUrl).toBe("https://teams.microsoft.com/l/meetup-join/test");
 			expect(data.data.platform).toBe("TEAMS");
 			expect(data.data.status).toBe("PENDING");
 
@@ -242,9 +240,7 @@ describe("API Server", () => {
 					platform: "TEAMS",
 					status: "COMPLETED",
 					organizationId,
-					botAccountId: (
-						await db.botAccount.findFirst({ where: { organizationId } })
-					)!.id,
+					botAccountId: (await db.botAccount.findFirst({ where: { organizationId } }))!.id,
 				},
 			});
 

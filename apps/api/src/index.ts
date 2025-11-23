@@ -1,29 +1,29 @@
-import { Elysia } from "elysia";
 import { cors } from "@elysiajs/cors";
 import { swagger } from "@elysiajs/swagger";
-import { loadEnv } from "./utils/env";
-import { logger } from "./utils/logger";
+import { Elysia } from "elysia";
 import { errorHandler } from "./middleware/error-handler";
 import { loggingMiddleware } from "./middleware/logging";
-import { initSentry } from "./services/sentry";
-import { healthRoutes } from "./routes/health";
-import { metricsRoutes } from "./routes/metrics";
-import { organizationsRoutes } from "./routes/organizations";
-import { usersRoutes } from "./routes/users";
-import { botAccountsRoutes } from "./routes/bot-accounts";
-import { meetingsRoutes } from "./routes/meetings";
-import { recordingsRoutes } from "./routes/recordings";
+import { rateLimit } from "./middleware/rate-limit";
 import { authRoutes } from "./routes/auth";
-import { jobsRoutes } from "./routes/jobs";
-import { gdprRoutes } from "./routes/gdpr";
-import { webhooksRoutes } from "./routes/webhooks";
-import { streamConfigRoutes } from "./routes/stream-config";
+import { botAccountsRoutes } from "./routes/bot-accounts";
 import { calendarRoutes } from "./routes/calendar";
 import { emailInvitationsRoutes } from "./routes/email-invitations";
-import { websocketService } from "./services/websocket";
+import { gdprRoutes } from "./routes/gdpr";
+import { healthRoutes } from "./routes/health";
+import { jobsRoutes } from "./routes/jobs";
+import { meetingsRoutes } from "./routes/meetings";
+import { metricsRoutes } from "./routes/metrics";
+import { organizationsRoutes } from "./routes/organizations";
+import { recordingsRoutes } from "./routes/recordings";
+import { streamConfigRoutes } from "./routes/stream-config";
+import { usersRoutes } from "./routes/users";
+import { webhooksRoutes } from "./routes/webhooks";
 import { calendarService } from "./services/calendar";
-import { rateLimit } from "./middleware/rate-limit";
 import { initializeMinIOBuckets } from "./services/minio-init";
+import { initSentry } from "./services/sentry";
+import { websocketService } from "./services/websocket";
+import { loadEnv } from "./utils/env";
+import { logger } from "./utils/logger";
 import "./services/retention"; // Initialize retention policy scheduler
 
 // Load environment variables

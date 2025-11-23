@@ -1,7 +1,7 @@
-import { Queue, Worker, type Job } from "bullmq";
+import { type Job, Queue, Worker } from "bullmq";
 import type { Env } from "../utils/env";
-import { logger, createChildLogger } from "../utils/logger";
-import { jobsProcessedTotal, jobProcessingDuration, activeJobs } from "../utils/metrics";
+import { createChildLogger } from "../utils/logger";
+import { activeJobs, jobProcessingDuration, jobsProcessedTotal } from "../utils/metrics";
 
 const queueLogger = createChildLogger("queue");
 
@@ -44,19 +44,15 @@ export class QueueService {
 	}
 
 	async addRecordingJob(data: RecordingJobData): Promise<Job<RecordingJobData>> {
-		const job = await this.recordingQueue.add(
-			"record-meeting",
-			data,
-			{
-				attempts: 3,
-				backoff: {
-					type: "exponential",
-					delay: 5000,
-				},
-				removeOnComplete: 100, // Keep last 100 completed jobs
-				removeOnFail: 200, // Keep last 200 failed jobs
+		const job = await this.recordingQueue.add("record-meeting", data, {
+			attempts: 3,
+			backoff: {
+				type: "exponential",
+				delay: 5000,
 			},
-		);
+			removeOnComplete: 100, // Keep last 100 completed jobs
+			removeOnFail: 200, // Keep last 200 failed jobs
+		});
 
 		queueLogger.info(`Recording job added: ${job.id} for meeting ${data.meetingId}`);
 
@@ -64,19 +60,15 @@ export class QueueService {
 	}
 
 	async addEncodingJob(data: EncodingJobData): Promise<Job<EncodingJobData>> {
-		const job = await this.encodingQueue.add(
-			"encode-recording",
-			data,
-			{
-				attempts: 2,
-				backoff: {
-					type: "exponential",
-					delay: 10000,
-				},
-				removeOnComplete: 100,
-				removeOnFail: 200,
+		const job = await this.encodingQueue.add("encode-recording", data, {
+			attempts: 2,
+			backoff: {
+				type: "exponential",
+				delay: 10000,
 			},
-		);
+			removeOnComplete: 100,
+			removeOnFail: 200,
+		});
 
 		queueLogger.info(`Encoding job added: ${job.id} for recording ${data.recordingId}`);
 
@@ -138,10 +130,7 @@ export class QueueService {
 	}
 
 	async close() {
-		await Promise.all([
-			this.recordingQueue.close(),
-			this.encodingQueue.close(),
-		]);
+		await Promise.all([this.recordingQueue.close(), this.encodingQueue.close()]);
 
 		queueLogger.info("Queue service closed");
 	}

@@ -26,12 +26,12 @@ export const PLATFORM_SELECTORS = {
 		huddleTitle: '[data-qa="huddle_title"]',
 	},
 	youtube: {
-		participantList: '.ytp-participant',
-		viewerCount: '.ytp-live-badge-text',
-		channelName: '#channel-name',
-		videoTitle: 'h1.ytd-video-primary-info-renderer',
-		liveChat: '#chat-messages .yt-live-chat-text-message-renderer',
-		chatAuthor: '#author-name',
+		participantList: ".ytp-participant",
+		viewerCount: ".ytp-live-badge-text",
+		channelName: "#channel-name",
+		videoTitle: "h1.ytd-video-primary-info-renderer",
+		liveChat: "#chat-messages .yt-live-chat-text-message-renderer",
+		chatAuthor: "#author-name",
 	},
 };
 
@@ -124,9 +124,7 @@ export class ParticipantTracker {
 					await this.pollYouTubeParticipants();
 					break;
 			}
-		} catch (error) {
-			console.error("Error polling participants:", error);
-		}
+		} catch (_error) {}
 	}
 
 	/**
@@ -141,7 +139,9 @@ export class ParticipantTracker {
 			const isRosterOpen = await this.page.$(selectors.participantList);
 			if (!isRosterOpen) {
 				await rosterButton.click().catch(() => {});
-				await this.page.waitForSelector(selectors.participantList, { timeout: 5000 }).catch(() => {});
+				await this.page
+					.waitForSelector(selectors.participantList, { timeout: 5000 })
+					.catch(() => {});
 			}
 		}
 
@@ -150,7 +150,8 @@ export class ParticipantTracker {
 		const now = new Date().toISOString();
 
 		for (const element of participantElements) {
-			const name = await element.$eval(selectors.participantName, (el) => el.textContent?.trim() || "")
+			const name = await element
+				.$eval(selectors.participantName, (el) => el.textContent?.trim() || "")
 				.catch(() => "Unknown");
 
 			if (!name || name === "Unknown") continue;
@@ -158,12 +159,13 @@ export class ParticipantTracker {
 			const id = name.toLowerCase().replace(/\s+/g, "-");
 			currentParticipants.add(id);
 
-			const avatar = await element.$eval(selectors.participantAvatar, (el: HTMLImageElement) => el.src)
+			const avatar = await element
+				.$eval(selectors.participantAvatar, (el: HTMLImageElement) => el.src)
 				.catch(() => undefined);
 
-			const isMuted = await element.$(selectors.participantMuted) !== null;
-			const isSpeaking = await element.$(selectors.participantSpeaking) !== null;
-			const isHost = await element.$(selectors.hostIndicator) !== null;
+			const isMuted = (await element.$(selectors.participantMuted)) !== null;
+			const isSpeaking = (await element.$(selectors.participantSpeaking)) !== null;
+			const isHost = (await element.$(selectors.hostIndicator)) !== null;
 
 			const participant: Participant = {
 				id,
@@ -193,7 +195,8 @@ export class ParticipantTracker {
 		const now = new Date().toISOString();
 
 		for (const element of participantElements) {
-			const name = await element.$eval(selectors.participantName, (el) => el.textContent?.trim() || "")
+			const name = await element
+				.$eval(selectors.participantName, (el) => el.textContent?.trim() || "")
 				.catch(() => "Unknown");
 
 			if (!name || name === "Unknown") continue;
@@ -201,11 +204,12 @@ export class ParticipantTracker {
 			const id = name.toLowerCase().replace(/\s+/g, "-");
 			currentParticipants.add(id);
 
-			const avatar = await element.$eval(selectors.participantAvatar, (el: HTMLImageElement) => el.src)
+			const avatar = await element
+				.$eval(selectors.participantAvatar, (el: HTMLImageElement) => el.src)
 				.catch(() => undefined);
 
-			const isMuted = await element.$(selectors.participantMuted) !== null;
-			const isSpeaking = await element.$(selectors.participantSpeaking) !== null;
+			const isMuted = (await element.$(selectors.participantMuted)) !== null;
+			const isSpeaking = (await element.$(selectors.participantSpeaking)) !== null;
 
 			const participant: Participant = {
 				id,
@@ -234,8 +238,10 @@ export class ParticipantTracker {
 		// For YouTube, we track chat participants
 		const chatMessages = await this.page.$$(selectors.liveChat);
 
-		for (const message of chatMessages.slice(-50)) { // Last 50 messages
-			const author = await message.$eval(selectors.chatAuthor, (el) => el.textContent?.trim() || "")
+		for (const message of chatMessages.slice(-50)) {
+			// Last 50 messages
+			const author = await message
+				.$eval(selectors.chatAuthor, (el) => el.textContent?.trim() || "")
 				.catch(() => "Unknown");
 
 			if (!author || author === "Unknown") continue;
@@ -345,28 +351,24 @@ export class ParticipantTracker {
 		try {
 			switch (this.platform) {
 				case "teams": {
-					const title = await this.page.$eval(
-						PLATFORM_SELECTORS.teams.meetingTitle,
-						(el) => el.textContent?.trim()
-					).catch(() => undefined);
+					const title = await this.page
+						.$eval(PLATFORM_SELECTORS.teams.meetingTitle, (el) => el.textContent?.trim())
+						.catch(() => undefined);
 					return { title };
 				}
 				case "slack": {
-					const title = await this.page.$eval(
-						PLATFORM_SELECTORS.slack.huddleTitle,
-						(el) => el.textContent?.trim()
-					).catch(() => undefined);
+					const title = await this.page
+						.$eval(PLATFORM_SELECTORS.slack.huddleTitle, (el) => el.textContent?.trim())
+						.catch(() => undefined);
 					return { title };
 				}
 				case "youtube": {
-					const title = await this.page.$eval(
-						PLATFORM_SELECTORS.youtube.videoTitle,
-						(el) => el.textContent?.trim()
-					).catch(() => undefined);
-					const host = await this.page.$eval(
-						PLATFORM_SELECTORS.youtube.channelName,
-						(el) => el.textContent?.trim()
-					).catch(() => undefined);
+					const title = await this.page
+						.$eval(PLATFORM_SELECTORS.youtube.videoTitle, (el) => el.textContent?.trim())
+						.catch(() => undefined);
+					const host = await this.page
+						.$eval(PLATFORM_SELECTORS.youtube.channelName, (el) => el.textContent?.trim())
+						.catch(() => undefined);
 					return { title, host };
 				}
 				default:

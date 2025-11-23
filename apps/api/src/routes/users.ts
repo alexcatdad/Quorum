@@ -1,15 +1,13 @@
-import { Elysia, t } from "elysia";
 import { db } from "@quorum/db";
-import { NotFoundError, ConflictError } from "../types/errors";
+import { Elysia, t } from "elysia";
+import { ConflictError, NotFoundError } from "../types/errors";
 import { logger } from "../utils/logger";
 
 export const usersRoutes = new Elysia({ prefix: "/users" })
 	.get(
 		"/",
 		async ({ query }) => {
-			const where = query.organizationId
-				? { organizationId: query.organizationId }
-				: undefined;
+			const where = query.organizationId ? { organizationId: query.organizationId } : undefined;
 
 			const users = await db.user.findMany({
 				where,
@@ -41,8 +39,7 @@ export const usersRoutes = new Elysia({ prefix: "/users" })
 			detail: {
 				tags: ["Users"],
 				summary: "List users",
-				description:
-					"Get a list of users, optionally filtered by organization ID",
+				description: "Get a list of users, optionally filtered by organization ID",
 			},
 		},
 	)
@@ -139,8 +136,7 @@ export const usersRoutes = new Elysia({ prefix: "/users" })
 			detail: {
 				tags: ["Users"],
 				summary: "Create user",
-				description:
-					"Create a new user. Role defaults to MEMBER if not specified.",
+				description: "Create a new user. Role defaults to MEMBER if not specified.",
 			},
 		},
 	)
@@ -163,9 +159,7 @@ export const usersRoutes = new Elysia({ prefix: "/users" })
 				});
 
 				if (emailTaken) {
-					throw new ConflictError(
-						`User with email '${body.email}' already exists`,
-					);
+					throw new ConflictError(`User with email '${body.email}' already exists`);
 				}
 			}
 

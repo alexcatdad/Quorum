@@ -1,8 +1,8 @@
-import { Elysia, t } from "elysia";
 import { db } from "@quorum/db";
+import { Elysia, t } from "elysia";
+import { minioService } from "../services/minio-instance";
 import { NotFoundError } from "../types/errors";
 import { logger } from "../utils/logger";
-import { minioService } from "../services/minio-instance";
 
 export const gdprRoutes = new Elysia({ prefix: "/gdpr" })
 	.post(
@@ -91,10 +91,7 @@ export const gdprRoutes = new Elysia({ prefix: "/gdpr" })
 				data: exportData,
 				totalUsers: organization.users.length,
 				totalMeetings: organization.meetings.length,
-				totalRecordings: organization.meetings.reduce(
-					(acc, m) => acc + m.recordings.length,
-					0,
-				),
+				totalRecordings: organization.meetings.reduce((acc, m) => acc + m.recordings.length, 0),
 			};
 		},
 		{
@@ -104,17 +101,14 @@ export const gdprRoutes = new Elysia({ prefix: "/gdpr" })
 			detail: {
 				tags: ["GDPR"],
 				summary: "Export organization data",
-				description:
-					"Export all data associated with an organization for GDPR compliance",
+				description: "Export all data associated with an organization for GDPR compliance",
 			},
 		},
 	)
 	.delete(
 		"/delete/:organizationId",
 		async ({ params: { organizationId }, query }) => {
-			logger.warn(
-				`GDPR data deletion requested for organization: ${organizationId}`,
-			);
+			logger.warn(`GDPR data deletion requested for organization: ${organizationId}`);
 
 			// Get organization with recordings
 			const organization = await db.organization.findUnique({
@@ -145,10 +139,7 @@ export const gdprRoutes = new Elysia({ prefix: "/gdpr" })
 								await minioService.deleteFile(recording.harFilePath);
 							}
 						} catch (error) {
-							logger.error(
-								`Failed to delete file from MinIO: ${recording.filePath}`,
-								error,
-							);
+							logger.error(`Failed to delete file from MinIO: ${recording.filePath}`, error);
 						}
 					}
 				}

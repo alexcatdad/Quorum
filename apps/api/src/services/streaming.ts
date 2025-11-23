@@ -1,7 +1,7 @@
-import { db } from "@quorum/db";
-import type { StreamConfig, StreamType, StreamFormat } from "@prisma/client";
 import { createHmac } from "node:crypto";
-import { logger, createChildLogger } from "../utils/logger";
+import type { StreamConfig, StreamFormat } from "@prisma/client";
+import { db } from "@quorum/db";
+import { createChildLogger } from "../utils/logger";
 import { webhookService } from "./webhook";
 
 const streamLogger = createChildLogger("streaming");
@@ -62,7 +62,7 @@ async function streamViaHttpPost(
 			"X-Stream-Meeting-Id": chunk.meetingId,
 			"X-Stream-Timestamp": chunk.timestamp,
 			...(signature && { "X-Stream-Signature": `sha256=${signature}` }),
-			...(config.headers as Record<string, string> || {}),
+			...((config.headers as Record<string, string>) || {}),
 		};
 
 		const response = await fetch(config.url, {
@@ -148,7 +148,7 @@ async function streamViaWebSocket(
 					resolve();
 				};
 
-				ws!.onerror = (event) => {
+				ws!.onerror = (_event) => {
 					clearTimeout(timeout);
 					reject(new Error("WebSocket connection error"));
 				};
@@ -156,10 +156,12 @@ async function streamViaWebSocket(
 
 			// Send authentication if secret is configured
 			if (config.secret) {
-				ws.send(JSON.stringify({
-					type: "auth",
-					secret: config.secret,
-				}));
+				ws.send(
+					JSON.stringify({
+						type: "auth",
+						secret: config.secret,
+					}),
+				);
 			}
 
 			wsConnections.set(config.id, ws);
@@ -362,7 +364,7 @@ export class StreamingService {
 						method: "POST",
 						headers: {
 							"Content-Type": "application/json",
-							...(config.headers as Record<string, string> || {}),
+							...((config.headers as Record<string, string>) || {}),
 						},
 						body: JSON.stringify(payload),
 					});
@@ -391,11 +393,13 @@ export class StreamingService {
 			// Close WebSocket connections
 			const ws = this.wsConnections.get(config.id);
 			if (ws && ws.readyState === WebSocket.OPEN) {
-				ws.send(JSON.stringify({
-					type: "stream_end",
-					meetingId,
-					timestamp: new Date().toISOString(),
-				}));
+				ws.send(
+					JSON.stringify({
+						type: "stream_end",
+						meetingId,
+						timestamp: new Date().toISOString(),
+					}),
+				);
 				ws.close();
 				this.wsConnections.delete(config.id);
 			}
@@ -414,7 +418,7 @@ export class StreamingService {
 						method: "POST",
 						headers: {
 							"Content-Type": "application/json",
-							...(config.headers as Record<string, string> || {}),
+							...((config.headers as Record<string, string>) || {}),
 						},
 						body: JSON.stringify(payload),
 					});
@@ -444,7 +448,7 @@ export class StreamingService {
 	 * Close all WebSocket connections (cleanup)
 	 */
 	closeAllConnections(): void {
-		for (const [configId, ws] of this.wsConnections) {
+		for (const [_configId, ws] of this.wsConnections) {
 			if (ws.readyState === WebSocket.OPEN) {
 				ws.close();
 			}

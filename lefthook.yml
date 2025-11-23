@@ -1,0 +1,23 @@
+# Lefthook configuration for git hooks
+# https://github.com/evilmartians/lefthook
+# Run `bunx lefthook install` to set up hooks
+
+pre-commit:
+  parallel: true
+  commands:
+    lint:
+      glob: "*.{js,ts,tsx,jsx,json}"
+      run: bunx biome check --write {staged_files}
+      stage_fixed: true
+    format:
+      glob: "*.{js,ts,tsx,jsx,json,css,md}"
+      run: bunx biome format --write {staged_files}
+      stage_fixed: true
+
+pre-push:
+  parallel: true
+  commands:
+    typecheck:
+      run: bun run typecheck
+    test:
+      run: bun test --bail

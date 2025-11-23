@@ -1,7 +1,7 @@
+import type { EmailInvitation } from "@prisma/client";
 import { db } from "@quorum/db";
-import type { EmailInvitation, Platform } from "@prisma/client";
-import { logger, createChildLogger } from "../utils/logger";
-import { extractMeetingUrl, calendarService } from "./calendar";
+import { createChildLogger } from "../utils/logger";
+import { calendarService, extractMeetingUrl } from "./calendar";
 
 const emailLogger = createChildLogger("email");
 
@@ -54,10 +54,7 @@ export class EmailService {
 	/**
 	 * Process an incoming email invitation
 	 */
-	async processIncomingEmail(
-		organizationId: string,
-		email: ParsedEmail,
-	): Promise<EmailInvitation> {
+	async processIncomingEmail(organizationId: string, email: ParsedEmail): Promise<EmailInvitation> {
 		emailLogger.info("Processing incoming email", {
 			organizationId,
 			from: email.from,
@@ -65,11 +62,7 @@ export class EmailService {
 		});
 
 		// Look for meeting URL in email body and subject
-		const searchText = [
-			email.subject || "",
-			email.bodyText || "",
-			email.bodyHtml || "",
-		].join(" ");
+		const searchText = [email.subject || "", email.bodyText || "", email.bodyHtml || ""].join(" ");
 
 		const meetingInfo = extractMeetingUrl(searchText);
 
@@ -79,7 +72,7 @@ export class EmailService {
 		let scheduledEnd: Date | undefined;
 
 		const icsAttachment = email.attachments?.find(
-			(a) => a.contentType === "text/calendar" || a.filename.endsWith(".ics")
+			(a) => a.contentType === "text/calendar" || a.filename.endsWith(".ics"),
 		);
 
 		if (icsAttachment) {

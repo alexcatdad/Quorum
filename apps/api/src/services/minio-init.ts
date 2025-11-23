@@ -1,4 +1,9 @@
-import { S3Client, CreateBucketCommand, HeadBucketCommand, PutBucketPolicyCommand } from "@aws-sdk/client-s3";
+import {
+	CreateBucketCommand,
+	HeadBucketCommand,
+	PutBucketPolicyCommand,
+	S3Client,
+} from "@aws-sdk/client-s3";
 import type { Env } from "../utils/env";
 import { logger } from "../utils/logger";
 
@@ -13,12 +18,7 @@ export async function initializeMinIOBuckets(env: Env): Promise<void> {
 		forcePathStyle: true,
 	});
 
-	const buckets = [
-		env.MINIO_BUCKET_NAME,
-		"recordings-raw",
-		"recordings-encoded",
-		"recordings-har",
-	];
+	const buckets = [env.MINIO_BUCKET_NAME, "recordings-raw", "recordings-encoded", "recordings-har"];
 
 	for (const bucketName of buckets) {
 		try {

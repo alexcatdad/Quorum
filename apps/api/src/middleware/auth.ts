@@ -1,7 +1,7 @@
 import type { Elysia } from "elysia";
-import { jwtVerify, type JWTPayload } from "jose";
-import { UnauthorizedError, ForbiddenError } from "../types/errors";
+import { type JWTPayload, jwtVerify } from "jose";
 import type { AuthContext } from "../types/context";
+import { ForbiddenError, UnauthorizedError } from "../types/errors";
 import { logger } from "../utils/logger";
 
 interface JWTCustomPayload extends JWTPayload {
@@ -33,12 +33,7 @@ export function createAuthMiddleware(jwtSecret: string, issuer: string, audience
 				audience,
 			});
 
-			if (
-				!payload.userId ||
-				!payload.organizationId ||
-				!payload.role ||
-				!payload.email
-			) {
+			if (!payload.userId || !payload.organizationId || !payload.role || !payload.email) {
 				throw new UnauthorizedError("Invalid token payload");
 			}
 
@@ -70,10 +65,7 @@ export function requireAuth(app: Elysia, jwtSecret: string, issuer: string, audi
 	});
 }
 
-export function requireRole(
-	app: Elysia,
-	roles: Array<"ADMIN" | "MEMBER" | "VIEWER">,
-) {
+export function requireRole(app: Elysia, roles: Array<"ADMIN" | "MEMBER" | "VIEWER">) {
 	return app.derive(({ store }) => {
 		const auth = (store as any).auth as AuthContext | undefined;
 

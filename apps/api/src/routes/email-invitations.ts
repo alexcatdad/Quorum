@@ -1,8 +1,8 @@
-import { Elysia, t } from "elysia";
 import { db } from "@quorum/db";
+import { Elysia, t } from "elysia";
+import { emailService } from "../services/email";
 import { NotFoundError } from "../types/errors";
 import { logger } from "../utils/logger";
-import { emailService } from "../services/email";
 
 // Email invitation status enum
 const EmailInvitationStatusEnum = t.Union([
@@ -59,11 +59,9 @@ export const emailInvitationsRoutes = new Elysia({ prefix: "/email-invitations" 
 			query: t.Object({
 				organizationId: t.Optional(t.String()),
 				status: t.Optional(EmailInvitationStatusEnum),
-				platform: t.Optional(t.Union([
-					t.Literal("TEAMS"),
-					t.Literal("SLACK"),
-					t.Literal("YOUTUBE"),
-				])),
+				platform: t.Optional(
+					t.Union([t.Literal("TEAMS"), t.Literal("SLACK"), t.Literal("YOUTUBE")]),
+				),
 				limit: t.Optional(t.Number({ minimum: 1, maximum: 100 })),
 				offset: t.Optional(t.Number({ minimum: 0 })),
 			}),
@@ -113,18 +111,15 @@ export const emailInvitationsRoutes = new Elysia({ prefix: "/email-invitations" 
 	.post(
 		"/incoming",
 		async ({ body }) => {
-			const invitation = await emailService.processIncomingEmail(
-				body.organizationId,
-				{
-					from: body.from,
-					to: body.to,
-					subject: body.subject,
-					bodyText: body.bodyText,
-					bodyHtml: body.bodyHtml,
-					headers: body.headers,
-					attachments: body.attachments,
-				},
-			);
+			const invitation = await emailService.processIncomingEmail(body.organizationId, {
+				from: body.from,
+				to: body.to,
+				subject: body.subject,
+				bodyText: body.bodyText,
+				bodyHtml: body.bodyHtml,
+				headers: body.headers,
+				attachments: body.attachments,
+			});
 
 			return { data: invitation };
 		},
@@ -137,16 +132,21 @@ export const emailInvitationsRoutes = new Elysia({ prefix: "/email-invitations" 
 				bodyText: t.Optional(t.String()),
 				bodyHtml: t.Optional(t.String()),
 				headers: t.Optional(t.Record(t.String(), t.String())),
-				attachments: t.Optional(t.Array(t.Object({
-					filename: t.String(),
-					contentType: t.String(),
-					content: t.String(),
-				}))),
+				attachments: t.Optional(
+					t.Array(
+						t.Object({
+							filename: t.String(),
+							contentType: t.String(),
+							content: t.String(),
+						}),
+					),
+				),
 			}),
 			detail: {
 				tags: ["EmailInvitations"],
 				summary: "Process incoming email",
-				description: "Webhook endpoint to process incoming email invitations. Parse meeting URLs and create invitation records.",
+				description:
+					"Webhook endpoint to process incoming email invitations. Parse meeting URLs and create invitation records.",
 			},
 		},
 	)
@@ -195,7 +195,9 @@ export const emailInvitationsRoutes = new Elysia({ prefix: "/email-invitations" 
 					results.scheduled++;
 				} catch (error) {
 					results.failed++;
-					results.errors.push(`${invitation.id}: ${error instanceof Error ? error.message : String(error)}`);
+					results.errors.push(
+						`${invitation.id}: ${error instanceof Error ? error.message : String(error)}`,
+					);
 				}
 			}
 

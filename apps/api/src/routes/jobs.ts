@@ -1,9 +1,9 @@
-import { Elysia, t } from "elysia";
 import { db } from "@quorum/db";
-import { NotFoundError } from "../types/errors";
-import { logger } from "../utils/logger";
+import { Elysia, t } from "elysia";
 import { QueueService } from "../services/queue";
+import { NotFoundError } from "../types/errors";
 import { loadEnv } from "../utils/env";
+import { logger } from "../utils/logger";
 
 const env = loadEnv();
 const queueService = new QueueService(env);

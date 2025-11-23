@@ -1,7 +1,6 @@
+import type { CalendarEvent, CalendarIntegration, Platform } from "@prisma/client";
 import { db } from "@quorum/db";
-import type { CalendarIntegration, CalendarEvent, Platform } from "@prisma/client";
-import { logger, createChildLogger } from "../utils/logger";
-import { webhookService } from "./webhook";
+import { createChildLogger } from "../utils/logger";
 
 const calendarLogger = createChildLogger("calendar");
 
@@ -22,16 +21,9 @@ const MEETING_URL_PATTERNS = {
 		/https:\/\/youtu\.be\/[^\s"<>]+/gi,
 		/https:\/\/(www\.)?youtube\.com\/live\/[^\s"<>]+/gi,
 	],
-	ZOOM: [
-		/https:\/\/[a-z0-9-]+\.zoom\.us\/j\/[^\s"<>]+/gi,
-		/https:\/\/zoom\.us\/j\/[^\s"<>]+/gi,
-	],
-	GOOGLE_MEET: [
-		/https:\/\/meet\.google\.com\/[a-z-]+/gi,
-	],
-	WEBEX: [
-		/https:\/\/[a-z0-9-]+\.webex\.com\/[^\s"<>]+/gi,
-	],
+	ZOOM: [/https:\/\/[a-z0-9-]+\.zoom\.us\/j\/[^\s"<>]+/gi, /https:\/\/zoom\.us\/j\/[^\s"<>]+/gi],
+	GOOGLE_MEET: [/https:\/\/meet\.google\.com\/[a-z-]+/gi],
+	WEBEX: [/https:\/\/[a-z0-9-]+\.webex\.com\/[^\s"<>]+/gi],
 };
 
 /**
@@ -143,10 +135,11 @@ function processICalProperty(event: Partial<ICalEvent>, key: string, value: stri
 			// Extract email from ORGANIZER:mailto:email@example.com
 			event.organizer = value.replace(/^mailto:/i, "");
 			break;
-		case "ATTENDEE":
+		case "ATTENDEE": {
 			const attendeeEmail = value.replace(/^mailto:/i, "");
 			event.attendees?.push(attendeeEmail);
 			break;
+		}
 	}
 }
 
@@ -157,7 +150,7 @@ export function extractMeetingUrl(text: string): { url: string; platform: Platfo
 	for (const [platform, patterns] of Object.entries(MEETING_URL_PATTERNS)) {
 		for (const pattern of patterns) {
 			const match = text.match(pattern);
-			if (match && match[0]) {
+			if (match?.[0]) {
 				// Only return platforms we support
 				if (platform === "TEAMS" || platform === "SLACK" || platform === "YOUTUBE") {
 					return { url: match[0], platform: platform as Platform };
@@ -285,11 +278,9 @@ export class CalendarService {
 		});
 
 		// Extract meeting URL from description, location, or summary
-		const searchText = [
-			event.description || "",
-			event.location || "",
-			event.summary || "",
-		].join(" ");
+		const searchText = [event.description || "", event.location || "", event.summary || ""].join(
+			" ",
+		);
 
 		const meetingInfo = extractMeetingUrl(searchText);
 
@@ -297,7 +288,7 @@ export class CalendarService {
 		let shouldProcess = true;
 		if (integration.filterKeywords.length > 0) {
 			shouldProcess = integration.filterKeywords.some((keyword) =>
-				searchText.toLowerCase().includes(keyword.toLowerCase())
+				searchText.toLowerCase().includes(keyword.toLowerCase()),
 			);
 		}
 
@@ -406,10 +397,7 @@ export class CalendarService {
 	/**
 	 * Get upcoming events for an organization
 	 */
-	async getUpcomingEvents(
-		organizationId: string,
-		hours: number = 24,
-	): Promise<CalendarEvent[]> {
+	async getUpcomingEvents(organizationId: string, hours: number = 24): Promise<CalendarEvent[]> {
 		const now = new Date();
 		const future = new Date(now.getTime() + hours * 60 * 60 * 1000);
 

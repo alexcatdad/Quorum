@@ -1,14 +1,14 @@
-import type { Job } from "bullmq";
-import { db } from "@quorum/db";
-import { VP9Encoder } from "@quorum/encoder";
-import type { EncodingJobData } from "../../../api/src/services/queue";
-import { logger } from "../utils/logger";
-import { minioService } from "../services/minio";
-import { webhookService } from "../../../api/src/services/webhook";
-import { writeFile, unlink, stat, mkdir } from "node:fs/promises";
 import { createWriteStream } from "node:fs";
+import { mkdir, stat, unlink } from "node:fs/promises";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
+import { db } from "@quorum/db";
+import { VP9Encoder } from "@quorum/encoder";
+import type { Job } from "bullmq";
+import type { EncodingJobData } from "../../../api/src/services/queue";
+import { webhookService } from "../../../api/src/services/webhook";
+import { minioService } from "../services/minio";
+import { logger } from "../utils/logger";
 
 export async function processEncodingJob(job: Job<EncodingJobData>): Promise<void> {
 	const { recordingId, organizationId, rawFilePath, outputFormat } = job.data;
@@ -139,15 +139,17 @@ export async function processEncodingJob(job: Job<EncodingJobData>): Promise<voi
 		});
 
 		// Trigger webhook: encoding failed
-		await webhookService.triggerEncodingFailed(
-			organizationId,
-			recordingId,
-			error instanceof Error ? error.message : String(error),
-			{
-				outputFormat,
-				failedAt: new Date().toISOString(),
-			},
-		).catch(() => {});
+		await webhookService
+			.triggerEncodingFailed(
+				organizationId,
+				recordingId,
+				error instanceof Error ? error.message : String(error),
+				{
+					outputFormat,
+					failedAt: new Date().toISOString(),
+				},
+			)
+			.catch(() => {});
 
 		throw error;
 	}

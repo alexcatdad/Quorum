@@ -5,8 +5,10 @@
 	"private": true,
 	"scripts": {
 		"dev": "bun --hot src/index.ts",
-		"start": "bun src/index.ts",
-		"test": "bun test"
+		"build": "bun build src/index.ts --outdir dist --target bun",
+		"start": "bun dist/index.js",
+		"test": "bun test",
+		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
 		"@quorum/db": "workspace:*",

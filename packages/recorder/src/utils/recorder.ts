@@ -1,5 +1,5 @@
-import type { Page } from "playwright";
 import { writeFile } from "node:fs/promises";
+import type { Page } from "playwright";
 import type { RecordingResult } from "../types";
 
 export async function startRecording(

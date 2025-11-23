@@ -1,5 +1,5 @@
-import { Elysia, t } from "elysia";
 import { db } from "@quorum/db";
+import { Elysia, t } from "elysia";
 import { NotFoundError } from "../types/errors";
 import { logger } from "../utils/logger";
 
@@ -7,9 +7,7 @@ export const botAccountsRoutes = new Elysia({ prefix: "/bot-accounts" })
 	.get(
 		"/",
 		async ({ query }) => {
-			const where = query.organizationId
-				? { organizationId: query.organizationId }
-				: undefined;
+			const where = query.organizationId ? { organizationId: query.organizationId } : undefined;
 
 			const botAccounts = await db.botAccount.findMany({
 				where,
@@ -43,8 +41,7 @@ export const botAccountsRoutes = new Elysia({ prefix: "/bot-accounts" })
 			detail: {
 				tags: ["BotAccounts"],
 				summary: "List bot accounts",
-				description:
-					"Get a list of bot accounts, optionally filtered by organization ID",
+				description: "Get a list of bot accounts, optionally filtered by organization ID",
 			},
 		},
 	)
@@ -133,11 +130,7 @@ export const botAccountsRoutes = new Elysia({ prefix: "/bot-accounts" })
 		{
 			body: t.Object({
 				name: t.String({ minLength: 1, maxLength: 255 }),
-				platform: t.Union([
-					t.Literal("TEAMS"),
-					t.Literal("SLACK"),
-					t.Literal("YOUTUBE"),
-				]),
+				platform: t.Union([t.Literal("TEAMS"), t.Literal("SLACK"), t.Literal("YOUTUBE")]),
 				username: t.String({ minLength: 1, maxLength: 255 }),
 				credentials: t.Any(), // JSON object
 				isActive: t.Optional(t.Boolean()),
@@ -195,11 +188,7 @@ export const botAccountsRoutes = new Elysia({ prefix: "/bot-accounts" })
 			body: t.Object({
 				name: t.Optional(t.String({ minLength: 1, maxLength: 255 })),
 				platform: t.Optional(
-					t.Union([
-						t.Literal("TEAMS"),
-						t.Literal("SLACK"),
-						t.Literal("YOUTUBE"),
-					]),
+					t.Union([t.Literal("TEAMS"), t.Literal("SLACK"), t.Literal("YOUTUBE")]),
 				),
 				username: t.Optional(t.String({ minLength: 1, maxLength: 255 })),
 				credentials: t.Optional(t.Any()),

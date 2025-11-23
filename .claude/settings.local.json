@@ -1,26 +1,26 @@
 {
-  "permissions": {
-    "allow": [
-      "Bash(tree:*)",
-      "Bash(docker ps:*)",
-      "Bash(cat:*)",
-      "Bash(docker inspect:*)",
-      "Bash(bun install:*)",
-      "Bash(bunx prisma migrate:*)",
-      "Bash(docker compose:*)",
-      "Bash(docker exec:*)",
-      "Bash(bun run:*)",
-      "Bash(lsof:*)",
-      "Bash(bunx prisma generate:*)",
-      "Bash(docker volume:*)",
-      "Bash(bun pm:*)",
-      "Bash(ls:*)",
-      "Bash(bun remove:*)",
-      "Bash(bun add:*)",
-      "Bash(bunx biome init:*)",
-      "Bash(psql:*)"
-    ],
-    "deny": [],
-    "ask": []
-  }
+	"permissions": {
+		"allow": [
+			"Bash(tree:*)",
+			"Bash(docker ps:*)",
+			"Bash(cat:*)",
+			"Bash(docker inspect:*)",
+			"Bash(bun install:*)",
+			"Bash(bunx prisma migrate:*)",
+			"Bash(docker compose:*)",
+			"Bash(docker exec:*)",
+			"Bash(bun run:*)",
+			"Bash(lsof:*)",
+			"Bash(bunx prisma generate:*)",
+			"Bash(docker volume:*)",
+			"Bash(bun pm:*)",
+			"Bash(ls:*)",
+			"Bash(bun remove:*)",
+			"Bash(bun add:*)",
+			"Bash(bunx biome init:*)",
+			"Bash(psql:*)"
+		],
+		"deny": [],
+		"ask": []
+	}
 }

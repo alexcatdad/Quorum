@@ -1,25 +1,27 @@
 {
-  "name": "quorum",
-  "version": "0.0.0",
-  "type": "module",
-  "private": true,
-  "packageManager": "bun@1.3.1",
-  "workspaces": [
-    "packages/*",
-    "apps/*"
-  ],
-  "scripts": {
-    "build": "turbo run build",
-    "test": "turbo run test",
-    "lint": "biome check .",
-    "lint:fix": "biome check --write .",
-    "format": "biome format --write .",
-    "format:check": "biome format ."
-  },
-  "devDependencies": {
-    "@biomejs/biome": "2.3.5",
-    "@types/bun": "latest",
-    "turbo": "^2.3.0",
-    "typescript": "^5.6.3"
-  }
+	"name": "quorum",
+	"version": "0.0.0",
+	"type": "module",
+	"private": true,
+	"packageManager": "bun@1.3.1",
+	"workspaces": [
+		"packages/*",
+		"apps/*"
+	],
+	"scripts": {
+		"build": "turbo run build",
+		"test": "turbo run test",
+		"typecheck": "turbo run typecheck",
+		"lint": "biome check .",
+		"lint:fix": "biome check --write .",
+		"format": "biome format --write .",
+		"format:check": "biome format ."
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.3.5",
+		"@types/bun": "latest",
+		"lefthook": "^2.0.4",
+		"turbo": "^2.3.0",
+		"typescript": "^5.6.3"
+	}
 }

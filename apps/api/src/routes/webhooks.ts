@@ -1,9 +1,9 @@
-import { Elysia, t } from "elysia";
+import { randomBytes } from "node:crypto";
 import { db } from "@quorum/db";
+import { Elysia, t } from "elysia";
+import { webhookService } from "../services/webhook";
 import { NotFoundError } from "../types/errors";
 import { logger } from "../utils/logger";
-import { webhookService } from "../services/webhook";
-import { randomBytes } from "node:crypto";
 
 // Generate a secure random secret for webhook signatures
 function generateWebhookSecret(): string {
@@ -74,7 +74,8 @@ export const webhooksRoutes = new Elysia({ prefix: "/webhooks" })
 			detail: {
 				tags: ["Webhooks"],
 				summary: "List webhooks",
-				description: "Get a list of webhooks with optional filtering by organization and active status",
+				description:
+					"Get a list of webhooks with optional filtering by organization and active status",
 			},
 		},
 	)
@@ -176,7 +177,8 @@ export const webhooksRoutes = new Elysia({ prefix: "/webhooks" })
 			detail: {
 				tags: ["Webhooks"],
 				summary: "Create webhook",
-				description: "Create a new webhook subscription. A secret will be auto-generated if not provided.",
+				description:
+					"Create a new webhook subscription. A secret will be auto-generated if not provided.",
 			},
 		},
 	)
@@ -234,7 +236,8 @@ export const webhooksRoutes = new Elysia({ prefix: "/webhooks" })
 			detail: {
 				tags: ["Webhooks"],
 				summary: "Update webhook",
-				description: "Update webhook configuration. Secret cannot be updated - delete and recreate instead.",
+				description:
+					"Update webhook configuration. Secret cannot be updated - delete and recreate instead.",
 			},
 		},
 	)
@@ -265,7 +268,8 @@ export const webhooksRoutes = new Elysia({ prefix: "/webhooks" })
 				data: {
 					id: webhook.id,
 					secret: webhook.secret,
-					message: "Secret regenerated successfully. Update your webhook consumer with the new secret.",
+					message:
+						"Secret regenerated successfully. Update your webhook consumer with the new secret.",
 				},
 			};
 		},

@@ -1,7 +1,12 @@
-import { chromium, type Browser, type Page, type BrowserContext } from "playwright";
-import type { RecordingConfig, RecordingResult, PlatformCredentials, ParticipantUpdateCallback } from "../types";
-import { startRecording, captureHAR, waitForMeetingToStart } from "../utils/recorder";
+import { type Browser, type BrowserContext, chromium, type Page } from "playwright";
+import type {
+	ParticipantUpdateCallback,
+	PlatformCredentials,
+	RecordingConfig,
+	RecordingResult,
+} from "../types";
 import { ParticipantTracker } from "../utils/participant-tracker";
+import { captureHAR, startRecording, waitForMeetingToStart } from "../utils/recorder";
 
 export class SlackRecorder {
 	private browser: Browser | null = null;
@@ -64,8 +69,7 @@ export class SlackRecorder {
 			await this.page.waitForSelector('[data-qa="workspace"]', { timeout: 30000 });
 
 			return true;
-		} catch (error) {
-			console.error("Slack login failed:", error);
+		} catch (_error) {
 			return false;
 		}
 	}
@@ -149,9 +153,7 @@ export class SlackRecorder {
 			if (leaveButton) {
 				await leaveButton.click();
 			}
-		} catch (error) {
-			console.error("Failed to leave huddle:", error);
-		}
+		} catch (_error) {}
 	}
 
 	async close(): Promise<void> {

@@ -1,6 +1,6 @@
 import type { Elysia } from "elysia";
 import { logger } from "../utils/logger";
-import { httpRequestsTotal, httpRequestDuration } from "../utils/metrics";
+import { httpRequestDuration, httpRequestsTotal } from "../utils/metrics";
 
 export function loggingMiddleware(app: Elysia) {
 	return app

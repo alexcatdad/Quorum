@@ -16,6 +16,8 @@ import { recordingsRoutes } from "./routes/recordings";
 import { authRoutes } from "./routes/auth";
 import { jobsRoutes } from "./routes/jobs";
 import { gdprRoutes } from "./routes/gdpr";
+import { webhooksRoutes } from "./routes/webhooks";
+import { streamConfigRoutes } from "./routes/stream-config";
 import { websocketService } from "./services/websocket";
 import { rateLimit } from "./middleware/rate-limit";
 import { initializeMinIOBuckets } from "./services/minio-init";
@@ -72,6 +74,8 @@ if (env.ENABLE_SWAGGER) {
 					{ name: "Recordings", description: "Recording artifact management" },
 					{ name: "Jobs", description: "Job queue management" },
 					{ name: "GDPR", description: "GDPR compliance endpoints" },
+					{ name: "Webhooks", description: "Webhook subscription management" },
+					{ name: "StreamConfig", description: "Real-time streaming configuration" },
 				],
 				components: {
 					securitySchemes: {
@@ -103,6 +107,8 @@ app.use(meetingsRoutes);
 app.use(recordingsRoutes);
 app.use(jobsRoutes);
 app.use(gdprRoutes);
+app.use(webhooksRoutes);
+app.use(streamConfigRoutes);
 
 // WebSocket endpoint
 app.ws("/ws", {

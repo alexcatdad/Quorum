@@ -53,11 +53,13 @@ model Organization {
   updatedAt DateTime @updatedAt
 
   // Relations
-  users       User[]
-  meetings    Meeting[]
-  botAccounts BotAccount[]
-  recordings  Recording[]
-  auditLogs   AuditLog[]
+  users         User[]
+  meetings      Meeting[]
+  botAccounts   BotAccount[]
+  recordings    Recording[]
+  auditLogs     AuditLog[]
+  webhooks      Webhook[]
+  streamConfigs StreamConfig[]
 
   @@index([slug])
   @@map("organizations")
@@ -115,9 +117,10 @@ model Meeting {
   updatedAt      DateTime      @updatedAt
 
   // Relations
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  botAccount   BotAccount?  @relation(fields: [botAccountId], references: [id], onDelete: SetNull)
-  recording    Recording?
+  organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  botAccount    BotAccount?    @relation(fields: [botAccountId], references: [id], onDelete: SetNull)
+  recording     Recording?
+  streamConfigs StreamConfig[]
 
   @@index([organizationId])
   @@index([status])
@@ -177,4 +180,106 @@ model AuditLog {
   @@index([entityId])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+// ============================================================================
+// WEBHOOKS - HTTP callbacks for external service integration
+// ============================================================================
+
+enum WebhookEvent {
+  MEETING_STARTED       // Meeting recording has started
+  MEETING_COMPLETED     // Meeting recording completed successfully
+  MEETING_FAILED        // Meeting recording failed
+  RECORDING_READY       // Recording file is ready for download
+  ENCODING_STARTED      // Video encoding has started
+  ENCODING_COMPLETED    // Video encoding completed
+  ENCODING_FAILED       // Video encoding failed
+  STREAM_CHUNK_READY    // Real-time stream chunk available
+}
+
+model Webhook {
+  id             String         @id @default(cuid())
+  organizationId String
+  name           String         // Human-readable name
+  url            String         // Callback URL
+  secret         String         // HMAC secret for signature verification
+  events         WebhookEvent[] // Events to subscribe to
+  isActive       Boolean        @default(true)
+  headers        Json?          // Custom headers to include in requests
+  retryCount     Int            @default(3)  // Max retry attempts
+  timeoutMs      Int            @default(30000) // Request timeout
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  // Relations
+  organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  deliveries   WebhookDelivery[]
+
+  @@index([organizationId])
+  @@index([isActive])
+  @@map("webhooks")
+}
+
+model WebhookDelivery {
+  id             String   @id @default(cuid())
+  webhookId      String
+  event          WebhookEvent
+  payload        Json     // The data sent
+  responseStatus Int?     // HTTP status code received
+  responseBody   String?  // Response body (truncated)
+  error          String?  // Error message if failed
+  duration       Int?     // Request duration in ms
+  attempt        Int      @default(1) // Current attempt number
+  success        Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  // Relations
+  webhook Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId])
+  @@index([event])
+  @@index([success])
+  @@index([createdAt])
+  @@map("webhook_deliveries")
+}
+
+// ============================================================================
+// STREAMING - Real-time content streaming configuration
+// ============================================================================
+
+enum StreamType {
+  HTTP_POST      // POST chunks to an HTTP endpoint
+  WEBSOCKET      // Stream via WebSocket connection
+  S3_MULTIPART   // Stream directly to S3-compatible storage
+}
+
+enum StreamFormat {
+  WEBM_CHUNK     // Raw WebM video chunks
+  AUDIO_ONLY     // Audio-only stream (for transcription)
+  METADATA       // Metadata updates only (participants, events)
+}
+
+model StreamConfig {
+  id             String       @id @default(cuid())
+  organizationId String
+  meetingId      String?      // Optional: specific meeting, null = org default
+  name           String       // Human-readable name
+  type           StreamType
+  format         StreamFormat
+  url            String       // Destination URL/endpoint
+  secret         String?      // Auth secret/token
+  headers        Json?        // Custom headers
+  chunkIntervalMs Int         @default(5000)  // How often to send chunks (ms)
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  meeting      Meeting?     @relation(fields: [meetingId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([meetingId])
+  @@index([isActive])
+  @@map("stream_configs")
 }

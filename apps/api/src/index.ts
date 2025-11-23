@@ -18,7 +18,10 @@ import { jobsRoutes } from "./routes/jobs";
 import { gdprRoutes } from "./routes/gdpr";
 import { webhooksRoutes } from "./routes/webhooks";
 import { streamConfigRoutes } from "./routes/stream-config";
+import { calendarRoutes } from "./routes/calendar";
+import { emailInvitationsRoutes } from "./routes/email-invitations";
 import { websocketService } from "./services/websocket";
+import { calendarService } from "./services/calendar";
 import { rateLimit } from "./middleware/rate-limit";
 import { initializeMinIOBuckets } from "./services/minio-init";
 import "./services/retention"; // Initialize retention policy scheduler
@@ -76,6 +79,8 @@ if (env.ENABLE_SWAGGER) {
 					{ name: "GDPR", description: "GDPR compliance endpoints" },
 					{ name: "Webhooks", description: "Webhook subscription management" },
 					{ name: "StreamConfig", description: "Real-time streaming configuration" },
+					{ name: "Calendar", description: "Calendar integration and event management" },
+					{ name: "EmailInvitations", description: "Email invitation processing" },
 				],
 				components: {
 					securitySchemes: {
@@ -109,6 +114,11 @@ app.use(jobsRoutes);
 app.use(gdprRoutes);
 app.use(webhooksRoutes);
 app.use(streamConfigRoutes);
+app.use(calendarRoutes);
+app.use(emailInvitationsRoutes);
+
+// Start calendar sync scheduler
+calendarService.startSyncScheduler();
 
 // WebSocket endpoint
 app.ws("/ws", {

@@ -1,5 +1,5 @@
 import type { ServerWebSocket } from "bun";
-import { logger, createChildLogger } from "../utils/logger";
+import { createChildLogger } from "../utils/logger";
 
 const wsLogger = createChildLogger("websocket");
 
@@ -186,7 +186,12 @@ export class WebSocketService {
 	}
 
 	// Notify about recording progress
-	notifyRecordingProgress(recordingId: string, organizationId: string, progress: number, metadata?: any) {
+	notifyRecordingProgress(
+		recordingId: string,
+		organizationId: string,
+		progress: number,
+		metadata?: any,
+	) {
 		this.broadcastToOrganization(organizationId, {
 			type: "recording.progress",
 			recordingId,
@@ -197,7 +202,12 @@ export class WebSocketService {
 	}
 
 	// Notify about encoding progress
-	notifyEncodingProgress(recordingId: string, organizationId: string, progress: number, metadata?: any) {
+	notifyEncodingProgress(
+		recordingId: string,
+		organizationId: string,
+		progress: number,
+		metadata?: any,
+	) {
 		this.broadcastToOrganization(organizationId, {
 			type: "encoding.progress",
 			recordingId,

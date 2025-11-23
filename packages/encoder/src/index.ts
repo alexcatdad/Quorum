@@ -195,9 +195,7 @@ export class VP9Encoder {
 				if (code === 0) {
 					try {
 						const info = JSON.parse(output);
-						const videoStream = info.streams?.find(
-							(s: any) => s.codec_type === "video",
-						);
+						const videoStream = info.streams?.find((s: any) => s.codec_type === "video");
 
 						if (videoStream) {
 							resolve({
@@ -210,7 +208,7 @@ export class VP9Encoder {
 						} else {
 							resolve(null);
 						}
-					} catch (error) {
+					} catch (_error) {
 						resolve(null);
 					}
 				} else {

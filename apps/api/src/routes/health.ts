@@ -1,5 +1,5 @@
-import { Elysia, t } from "elysia";
 import { db } from "@quorum/db";
+import { Elysia, t } from "elysia";
 import { logger } from "../utils/logger";
 
 interface HealthCheck {
@@ -52,9 +52,7 @@ export const healthRoutes = new Elysia({ prefix: "/health" })
 					uptime: t.Number(),
 					services: t.Object({
 						database: t.Union([t.Literal("healthy"), t.Literal("unhealthy")]),
-						redis: t.Optional(
-							t.Union([t.Literal("healthy"), t.Literal("unhealthy")]),
-						),
+						redis: t.Optional(t.Union([t.Literal("healthy"), t.Literal("unhealthy")])),
 					}),
 				}),
 			},

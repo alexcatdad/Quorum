@@ -15,8 +15,8 @@ export function initSentry(env: Env) {
 		beforeSend(event) {
 			// Remove sensitive data
 			if (event.request?.headers) {
-				delete event.request.headers.authorization;
-				delete event.request.headers.cookie;
+				event.request.headers.authorization = undefined;
+				event.request.headers.cookie = undefined;
 			}
 			return event;
 		},

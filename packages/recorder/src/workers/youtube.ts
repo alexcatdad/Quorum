@@ -1,11 +1,26 @@
-import { chromium, type Browser, type Page, type BrowserContext } from "playwright";
-import type { RecordingConfig, RecordingResult, PlatformCredentials } from "../types";
-import { startRecording, captureHAR, waitForMeetingToStart } from "../utils/recorder";
+import { type Browser, type BrowserContext, chromium, type Page } from "playwright";
+import type {
+	ParticipantUpdateCallback,
+	PlatformCredentials,
+	RecordingConfig,
+	RecordingResult,
+} from "../types";
+import { ParticipantTracker } from "../utils/participant-tracker";
+import { captureHAR, startRecording, waitForMeetingToStart } from "../utils/recorder";
 
 export class YouTubeRecorder {
 	private browser: Browser | null = null;
 	private context: BrowserContext | null = null;
 	private page: Page | null = null;
+	private participantTracker: ParticipantTracker | null = null;
+	private onParticipantUpdate: ParticipantUpdateCallback | null = null;
+
+	/**
+	 * Set callback for real-time participant updates (chat participants for YouTube)
+	 */
+	setParticipantUpdateCallback(callback: ParticipantUpdateCallback): void {
+		this.onParticipantUpdate = callback;
+	}
 
 	async initialize(): Promise<void> {
 		this.browser = await chromium.launch({
@@ -53,8 +68,7 @@ export class YouTubeRecorder {
 			await this.page.waitForTimeout(5000);
 
 			return true;
-		} catch (error) {
-			console.error("YouTube/Google login failed:", error);
+		} catch (_error) {
 			return false;
 		}
 	}
@@ -97,8 +111,28 @@ export class YouTubeRecorder {
 				await qualityOptions[0].click(); // First option is usually highest quality
 			}
 
+			// Start participant tracking (tracks chat participants for YouTube)
+			if (config.trackParticipants !== false) {
+				this.participantTracker = new ParticipantTracker(this.page, "youtube");
+				if (this.onParticipantUpdate) {
+					this.participantTracker.setUpdateCallback(this.onParticipantUpdate);
+				}
+				await this.participantTracker.startTracking(config.participantPollInterval || 10000);
+			}
+
 			// Start recording
 			const result = await startRecording(this.page, config.outputPath, config.duration);
+
+			// Stop participant tracking and get results
+			if (this.participantTracker) {
+				this.participantTracker.stopTracking();
+				result.participants = this.participantTracker.getParticipants();
+				result.participantEvents = this.participantTracker.getEvents();
+
+				const metadata = await this.participantTracker.getMeetingMetadata();
+				result.meetingTitle = metadata.title;
+				result.hostName = metadata.host;
+			}
 
 			// Capture HAR file
 			if (this.context) {

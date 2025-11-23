@@ -1,18 +1,18 @@
 {
-  "name": "@quorum/test-app",
-  "version": "0.0.0",
-  "type": "module",
-  "private": true,
-  "scripts": {
-    "dev": "bun run src/index.ts",
-    "build": "echo 'Build successful'",
-    "test": "bun test",
-    "lint": "eslint src/**/*.ts"
-  },
-  "dependencies": {
-    "@quorum/shared": "workspace:*"
-  },
-  "devDependencies": {
-    "@types/bun": "latest"
-  }
+	"name": "@quorum/test-app",
+	"version": "0.0.0",
+	"type": "module",
+	"private": true,
+	"scripts": {
+		"dev": "bun run src/index.ts",
+		"build": "echo 'Build successful'",
+		"test": "bun test",
+		"lint": "eslint src/**/*.ts"
+	},
+	"dependencies": {
+		"@quorum/shared": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/bun": "latest"
+	}
 }

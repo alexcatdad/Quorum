@@ -1,6 +1,6 @@
-import { Elysia, t } from "elysia";
 import { db } from "@quorum/db";
-import { NotFoundError, ConflictError, ValidationError } from "../types/errors";
+import { Elysia, t } from "elysia";
+import { ConflictError, NotFoundError } from "../types/errors";
 import { logger } from "../utils/logger";
 
 export const organizationsRoutes = new Elysia({ prefix: "/organizations" })
@@ -81,9 +81,7 @@ export const organizationsRoutes = new Elysia({ prefix: "/organizations" })
 			});
 
 			if (existing) {
-				throw new ConflictError(
-					`Organization with slug '${body.slug}' already exists`,
-				);
+				throw new ConflictError(`Organization with slug '${body.slug}' already exists`);
 			}
 
 			const organization = await db.organization.create({
@@ -133,9 +131,7 @@ export const organizationsRoutes = new Elysia({ prefix: "/organizations" })
 				});
 
 				if (slugTaken) {
-					throw new ConflictError(
-						`Organization with slug '${body.slug}' already exists`,
-					);
+					throw new ConflictError(`Organization with slug '${body.slug}' already exists`);
 				}
 			}
 

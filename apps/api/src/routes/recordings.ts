@@ -1,5 +1,5 @@
-import { Elysia, t } from "elysia";
 import { db } from "@quorum/db";
+import { Elysia, t } from "elysia";
 import { NotFoundError } from "../types/errors";
 import { logger } from "../utils/logger";
 
@@ -281,8 +281,7 @@ export const recordingsRoutes = new Elysia({ prefix: "/recordings" })
 			detail: {
 				tags: ["Recordings"],
 				summary: "Update recording",
-				description:
-					"Update recording details, status, file paths, or metadata",
+				description: "Update recording details, status, file paths, or metadata",
 			},
 		},
 	)

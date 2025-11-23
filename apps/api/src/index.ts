@@ -1,24 +1,29 @@
-import { Elysia } from "elysia";
 import { cors } from "@elysiajs/cors";
 import { swagger } from "@elysiajs/swagger";
-import { loadEnv } from "./utils/env";
-import { logger } from "./utils/logger";
+import { Elysia } from "elysia";
 import { errorHandler } from "./middleware/error-handler";
 import { loggingMiddleware } from "./middleware/logging";
-import { initSentry } from "./services/sentry";
+import { rateLimit } from "./middleware/rate-limit";
+import { authRoutes } from "./routes/auth";
+import { botAccountsRoutes } from "./routes/bot-accounts";
+import { calendarRoutes } from "./routes/calendar";
+import { emailInvitationsRoutes } from "./routes/email-invitations";
+import { gdprRoutes } from "./routes/gdpr";
 import { healthRoutes } from "./routes/health";
+import { jobsRoutes } from "./routes/jobs";
+import { meetingsRoutes } from "./routes/meetings";
 import { metricsRoutes } from "./routes/metrics";
 import { organizationsRoutes } from "./routes/organizations";
-import { usersRoutes } from "./routes/users";
-import { botAccountsRoutes } from "./routes/bot-accounts";
-import { meetingsRoutes } from "./routes/meetings";
 import { recordingsRoutes } from "./routes/recordings";
-import { authRoutes } from "./routes/auth";
-import { jobsRoutes } from "./routes/jobs";
-import { gdprRoutes } from "./routes/gdpr";
-import { websocketService } from "./services/websocket";
-import { rateLimit } from "./middleware/rate-limit";
+import { streamConfigRoutes } from "./routes/stream-config";
+import { usersRoutes } from "./routes/users";
+import { webhooksRoutes } from "./routes/webhooks";
+import { calendarService } from "./services/calendar";
 import { initializeMinIOBuckets } from "./services/minio-init";
+import { initSentry } from "./services/sentry";
+import { websocketService } from "./services/websocket";
+import { loadEnv } from "./utils/env";
+import { logger } from "./utils/logger";
 import "./services/retention"; // Initialize retention policy scheduler
 
 // Load environment variables
@@ -72,6 +77,10 @@ if (env.ENABLE_SWAGGER) {
 					{ name: "Recordings", description: "Recording artifact management" },
 					{ name: "Jobs", description: "Job queue management" },
 					{ name: "GDPR", description: "GDPR compliance endpoints" },
+					{ name: "Webhooks", description: "Webhook subscription management" },
+					{ name: "StreamConfig", description: "Real-time streaming configuration" },
+					{ name: "Calendar", description: "Calendar integration and event management" },
+					{ name: "EmailInvitations", description: "Email invitation processing" },
 				],
 				components: {
 					securitySchemes: {
@@ -103,6 +112,13 @@ app.use(meetingsRoutes);
 app.use(recordingsRoutes);
 app.use(jobsRoutes);
 app.use(gdprRoutes);
+app.use(webhooksRoutes);
+app.use(streamConfigRoutes);
+app.use(calendarRoutes);
+app.use(emailInvitationsRoutes);
+
+// Start calendar sync scheduler
+calendarService.startSyncScheduler();
 
 // WebSocket endpoint
 app.ws("/ws", {

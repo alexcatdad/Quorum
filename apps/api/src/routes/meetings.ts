@@ -1,5 +1,5 @@
-import { Elysia, t } from "elysia";
 import { db } from "@quorum/db";
+import { Elysia, t } from "elysia";
 import { NotFoundError } from "../types/errors";
 import { logger } from "../utils/logger";
 
@@ -68,11 +68,7 @@ export const meetingsRoutes = new Elysia({ prefix: "/meetings" })
 					]),
 				),
 				platform: t.Optional(
-					t.Union([
-						t.Literal("TEAMS"),
-						t.Literal("SLACK"),
-						t.Literal("YOUTUBE"),
-					]),
+					t.Union([t.Literal("TEAMS"), t.Literal("SLACK"), t.Literal("YOUTUBE")]),
 				),
 				limit: t.Optional(t.Number({ minimum: 1, maximum: 100 })),
 				offset: t.Optional(t.Number({ minimum: 0 })),
@@ -80,8 +76,7 @@ export const meetingsRoutes = new Elysia({ prefix: "/meetings" })
 			detail: {
 				tags: ["Meetings"],
 				summary: "List meetings",
-				description:
-					"Get a list of meetings with filtering and pagination options",
+				description: "Get a list of meetings with filtering and pagination options",
 			},
 		},
 	)
@@ -123,8 +118,7 @@ export const meetingsRoutes = new Elysia({ prefix: "/meetings" })
 			detail: {
 				tags: ["Meetings"],
 				summary: "Get meeting by ID",
-				description:
-					"Get detailed information about a specific meeting including recordings",
+				description: "Get detailed information about a specific meeting including recordings",
 			},
 		},
 	)
@@ -154,12 +148,8 @@ export const meetingsRoutes = new Elysia({ prefix: "/meetings" })
 					meetingUrl: body.meetingUrl,
 					platform: body.platform,
 					status: body.status || "PENDING",
-					scheduledStart: body.scheduledStart
-						? new Date(body.scheduledStart)
-						: undefined,
-					scheduledEnd: body.scheduledEnd
-						? new Date(body.scheduledEnd)
-						: undefined,
+					scheduledStart: body.scheduledStart ? new Date(body.scheduledStart) : undefined,
+					scheduledEnd: body.scheduledEnd ? new Date(body.scheduledEnd) : undefined,
 					metadata: body.metadata || {},
 					organizationId: body.organizationId,
 					botAccountId: body.botAccountId,
@@ -190,11 +180,7 @@ export const meetingsRoutes = new Elysia({ prefix: "/meetings" })
 		{
 			body: t.Object({
 				meetingUrl: t.String({ format: "uri" }),
-				platform: t.Union([
-					t.Literal("TEAMS"),
-					t.Literal("SLACK"),
-					t.Literal("YOUTUBE"),
-				]),
+				platform: t.Union([t.Literal("TEAMS"), t.Literal("SLACK"), t.Literal("YOUTUBE")]),
 				status: t.Optional(
 					t.Union([
 						t.Literal("PENDING"),
@@ -212,8 +198,7 @@ export const meetingsRoutes = new Elysia({ prefix: "/meetings" })
 			detail: {
 				tags: ["Meetings"],
 				summary: "Create meeting",
-				description:
-					"Create a new meeting recording session. Status defaults to PENDING.",
+				description: "Create a new meeting recording session. Status defaults to PENDING.",
 			},
 		},
 	)
@@ -301,8 +286,7 @@ export const meetingsRoutes = new Elysia({ prefix: "/meetings" })
 			detail: {
 				tags: ["Meetings"],
 				summary: "Update meeting",
-				description:
-					"Update meeting details, status, timestamps, or metadata",
+				description: "Update meeting details, status, timestamps, or metadata",
 			},
 		},
 	)
@@ -327,9 +311,7 @@ export const meetingsRoutes = new Elysia({ prefix: "/meetings" })
 
 			// Warn if deleting meeting with recordings
 			if (existing._count.recordings > 0) {
-				logger.warn(
-					`Deleting meeting ${id} with ${existing._count.recordings} recordings`,
-				);
+				logger.warn(`Deleting meeting ${id} with ${existing._count.recordings} recordings`);
 			}
 
 			await db.meeting.delete({
@@ -347,8 +329,7 @@ export const meetingsRoutes = new Elysia({ prefix: "/meetings" })
 			detail: {
 				tags: ["Meetings"],
 				summary: "Delete meeting",
-				description:
-					"Delete a meeting and all associated recordings. This action is irreversible.",
+				description: "Delete a meeting and all associated recordings. This action is irreversible.",
 			},
 		},
 	);

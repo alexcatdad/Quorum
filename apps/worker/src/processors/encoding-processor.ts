@@ -1,13 +1,14 @@
-import type { Job } from "bullmq";
-import { db } from "@quorum/db";
-import { VP9Encoder } from "@quorum/encoder";
-import type { EncodingJobData } from "../../../api/src/services/queue";
-import { logger } from "../utils/logger";
-import { minioService } from "../services/minio";
-import { writeFile, unlink, stat } from "node:fs/promises";
 import { createWriteStream } from "node:fs";
+import { mkdir, stat, unlink } from "node:fs/promises";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
+import { db } from "@quorum/db";
+import { VP9Encoder } from "@quorum/encoder";
+import type { Job } from "bullmq";
+import type { EncodingJobData } from "../../../api/src/services/queue";
+import { webhookService } from "../../../api/src/services/webhook";
+import { minioService } from "../services/minio";
+import { logger } from "../utils/logger";
 
 export async function processEncodingJob(job: Job<EncodingJobData>): Promise<void> {
 	const { recordingId, organizationId, rawFilePath, outputFormat } = job.data;
@@ -28,8 +29,16 @@ export async function processEncodingJob(job: Job<EncodingJobData>): Promise<voi
 			},
 		});
 
+		// Trigger webhook: encoding started
+		await webhookService.triggerEncodingStarted(organizationId, recordingId, {
+			rawFilePath,
+			outputFormat,
+			startedAt: new Date().toISOString(),
+		});
+
 		// Download raw file from MinIO
 		const timestamp = Date.now();
+		await mkdir("./temp", { recursive: true });
 		const localRawPath = `./temp/${recordingId}-${timestamp}-raw.webm`;
 		const localEncodedPath = `./temp/${recordingId}-${timestamp}-encoded.${outputFormat}`;
 
@@ -108,6 +117,14 @@ export async function processEncodingJob(job: Job<EncodingJobData>): Promise<voi
 
 		jobLogger.info("Encoding job completed successfully");
 
+		// Trigger webhook: encoding completed
+		await webhookService.triggerEncodingCompleted(organizationId, recordingId, encodedMinioKey, {
+			outputFormat,
+			fileSize: encodedStats.size,
+			codec: "vp9",
+			completedAt: new Date().toISOString(),
+		});
+
 		await job.updateProgress(100);
 	} catch (error) {
 		jobLogger.error("Encoding job failed", error);
@@ -120,6 +137,19 @@ export async function processEncodingJob(job: Job<EncodingJobData>): Promise<voi
 				error: error instanceof Error ? error.message : String(error),
 			},
 		});
+
+		// Trigger webhook: encoding failed
+		await webhookService
+			.triggerEncodingFailed(
+				organizationId,
+				recordingId,
+				error instanceof Error ? error.message : String(error),
+				{
+					outputFormat,
+					failedAt: new Date().toISOString(),
+				},
+			)
+			.catch(() => {});
 
 		throw error;
 	}

@@ -1,10 +1,10 @@
+import { db } from "@quorum/db";
 import { Elysia, t } from "elysia";
 import { SignJWT } from "jose";
-import { db } from "@quorum/db";
 import { ConflictError, UnauthorizedError, ValidationError } from "../types/errors";
-import { logger } from "../utils/logger";
 import { loadEnv } from "../utils/env";
-import { hashPassword, verifyPassword, validatePasswordStrength } from "../utils/password";
+import { logger } from "../utils/logger";
+import { hashPassword, validatePasswordStrength, verifyPassword } from "../utils/password";
 
 const env = loadEnv();
 const secret = new TextEncoder().encode(env.JWT_SECRET);
@@ -83,9 +83,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
 
 				const token = await createToken(user.id, newOrg.id, user.role, user.email);
 
-				logger.info(
-					`User registered with new organization: ${user.id} (${user.email})`,
-				);
+				logger.info(`User registered with new organization: ${user.id} (${user.email})`);
 
 				return {
 					token,
@@ -110,12 +108,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
 				},
 			});
 
-			const token = await createToken(
-				user.id,
-				organization.id,
-				user.role,
-				user.email,
-			);
+			const token = await createToken(user.id, organization.id, user.role, user.email);
 
 			logger.info(`User registered: ${user.id} (${user.email})`);
 
@@ -138,9 +131,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
 				organizationId: t.Optional(t.String()),
 				organizationName: t.Optional(t.String()),
 				organizationSlug: t.Optional(t.String()),
-				role: t.Optional(
-					t.Union([t.Literal("ADMIN"), t.Literal("MEMBER"), t.Literal("VIEWER")]),
-				),
+				role: t.Optional(t.Union([t.Literal("ADMIN"), t.Literal("MEMBER"), t.Literal("VIEWER")])),
 			}),
 			detail: {
 				tags: ["Auth"],
@@ -180,12 +171,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
 				throw new UnauthorizedError("Password required");
 			}
 
-			const token = await createToken(
-				user.id,
-				user.organizationId,
-				user.role,
-				user.email,
-			);
+			const token = await createToken(user.id, user.organizationId, user.role, user.email);
 
 			logger.info(`User logged in: ${user.id} (${user.email})`);
 
@@ -269,8 +255,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
 			detail: {
 				tags: ["Auth"],
 				summary: "Change password",
-				description:
-					"Change user password. Requires current password for verification.",
+				description: "Change user password. Requires current password for verification.",
 			},
 		},
 	);

@@ -53,11 +53,15 @@ model Organization {
   updatedAt DateTime @updatedAt
 
   // Relations
-  users       User[]
-  meetings    Meeting[]
-  botAccounts BotAccount[]
-  recordings  Recording[]
-  auditLogs   AuditLog[]
+  users                User[]
+  meetings             Meeting[]
+  botAccounts          BotAccount[]
+  recordings           Recording[]
+  auditLogs            AuditLog[]
+  webhooks             Webhook[]
+  streamConfigs        StreamConfig[]
+  calendarIntegrations CalendarIntegration[]
+  emailInvitations     EmailInvitation[]
 
   @@index([slug])
   @@map("organizations")
@@ -115,9 +119,12 @@ model Meeting {
   updatedAt      DateTime      @updatedAt
 
   // Relations
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  botAccount   BotAccount?  @relation(fields: [botAccountId], references: [id], onDelete: SetNull)
-  recording    Recording?
+  organization     Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  botAccount       BotAccount?       @relation(fields: [botAccountId], references: [id], onDelete: SetNull)
+  recording        Recording?
+  streamConfigs    StreamConfig[]
+  calendarEvents   CalendarEvent[]
+  emailInvitations EmailInvitation[]
 
   @@index([organizationId])
   @@index([status])
@@ -177,4 +184,227 @@ model AuditLog {
   @@index([entityId])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+// ============================================================================
+// WEBHOOKS - HTTP callbacks for external service integration
+// ============================================================================
+
+enum WebhookEvent {
+  MEETING_STARTED       // Meeting recording has started
+  MEETING_COMPLETED     // Meeting recording completed successfully
+  MEETING_FAILED        // Meeting recording failed
+  RECORDING_READY       // Recording file is ready for download
+  ENCODING_STARTED      // Video encoding has started
+  ENCODING_COMPLETED    // Video encoding completed
+  ENCODING_FAILED       // Video encoding failed
+  STREAM_CHUNK_READY    // Real-time stream chunk available
+}
+
+model Webhook {
+  id             String         @id @default(cuid())
+  organizationId String
+  name           String         // Human-readable name
+  url            String         // Callback URL
+  secret         String         // HMAC secret for signature verification
+  events         WebhookEvent[] // Events to subscribe to
+  isActive       Boolean        @default(true)
+  headers        Json?          // Custom headers to include in requests
+  retryCount     Int            @default(3)  // Max retry attempts
+  timeoutMs      Int            @default(30000) // Request timeout
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  // Relations
+  organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  deliveries   WebhookDelivery[]
+
+  @@index([organizationId])
+  @@index([isActive])
+  @@map("webhooks")
+}
+
+model WebhookDelivery {
+  id             String   @id @default(cuid())
+  webhookId      String
+  event          WebhookEvent
+  payload        Json     // The data sent
+  responseStatus Int?     // HTTP status code received
+  responseBody   String?  // Response body (truncated)
+  error          String?  // Error message if failed
+  duration       Int?     // Request duration in ms
+  attempt        Int      @default(1) // Current attempt number
+  success        Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  // Relations
+  webhook Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId])
+  @@index([event])
+  @@index([success])
+  @@index([createdAt])
+  @@map("webhook_deliveries")
+}
+
+// ============================================================================
+// STREAMING - Real-time content streaming configuration
+// ============================================================================
+
+enum StreamType {
+  HTTP_POST      // POST chunks to an HTTP endpoint
+  WEBSOCKET      // Stream via WebSocket connection
+  S3_MULTIPART   // Stream directly to S3-compatible storage
+}
+
+enum StreamFormat {
+  WEBM_CHUNK     // Raw WebM video chunks
+  AUDIO_ONLY     // Audio-only stream (for transcription)
+  METADATA       // Metadata updates only (participants, events)
+}
+
+model StreamConfig {
+  id             String       @id @default(cuid())
+  organizationId String
+  meetingId      String?      // Optional: specific meeting, null = org default
+  name           String       // Human-readable name
+  type           StreamType
+  format         StreamFormat
+  url            String       // Destination URL/endpoint
+  secret         String?      // Auth secret/token
+  headers        Json?        // Custom headers
+  chunkIntervalMs Int         @default(5000)  // How often to send chunks (ms)
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  meeting      Meeting?     @relation(fields: [meetingId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([meetingId])
+  @@index([isActive])
+  @@map("stream_configs")
+}
+
+// ============================================================================
+// CALENDAR INTEGRATION - iCal, Google Calendar, Outlook
+// ============================================================================
+
+enum CalendarProvider {
+  ICAL         // iCal file/URL
+  GOOGLE       // Google Calendar API
+  OUTLOOK      // Microsoft Outlook/365 API
+}
+
+enum CalendarEventStatus {
+  PENDING      // Not yet processed
+  SCHEDULED    // Meeting scheduled for recording
+  SKIPPED      // Event skipped (not a meeting)
+  COMPLETED    // Recording completed
+  FAILED       // Failed to record
+}
+
+model CalendarIntegration {
+  id             String           @id @default(cuid())
+  organizationId String
+  name           String           // Human-readable name
+  provider       CalendarProvider
+  calendarUrl    String?          // iCal URL (for ICAL provider)
+  accessToken    String?          // OAuth access token (encrypted)
+  refreshToken   String?          // OAuth refresh token (encrypted)
+  tokenExpiry    DateTime?        // When access token expires
+  calendarId     String?          // Specific calendar ID (for multi-calendar accounts)
+  syncInterval   Int              @default(300) // How often to sync (seconds)
+  lastSyncAt     DateTime?
+  isActive       Boolean          @default(true)
+  autoSchedule   Boolean          @default(false) // Auto-create meetings from events
+  filterKeywords String[]         // Only process events with these keywords
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  // Relations
+  organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  events       CalendarEvent[]
+
+  @@index([organizationId])
+  @@index([provider])
+  @@index([isActive])
+  @@map("calendar_integrations")
+}
+
+model CalendarEvent {
+  id                    String              @id @default(cuid())
+  calendarIntegrationId String
+  organizationId        String
+  externalId            String              // Event ID from calendar provider
+  title                 String
+  description           String?
+  location              String?             // Could be meeting URL
+  meetingUrl            String?             // Extracted meeting URL
+  platform              Platform?           // Detected platform
+  startTime             DateTime
+  endTime               DateTime
+  organizer             String?             // Organizer email/name
+  attendees             Json?               // List of attendees
+  status                CalendarEventStatus @default(PENDING)
+  meetingId             String?             // Linked meeting (if scheduled)
+  error                 String?             // Error message if failed
+  rawData               Json?               // Original event data
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  // Relations
+  calendarIntegration CalendarIntegration @relation(fields: [calendarIntegrationId], references: [id], onDelete: Cascade)
+  meeting             Meeting?            @relation(fields: [meetingId], references: [id], onDelete: SetNull)
+
+  @@unique([calendarIntegrationId, externalId])
+  @@index([organizationId])
+  @@index([startTime])
+  @@index([status])
+  @@index([meetingId])
+  @@map("calendar_events")
+}
+
+// ============================================================================
+// EMAIL INVITATIONS
+// ============================================================================
+
+enum EmailInvitationStatus {
+  PENDING      // Waiting to be processed
+  PROCESSED    // Meeting extracted and scheduled
+  INVALID      // Not a valid meeting invitation
+  FAILED       // Failed to process
+}
+
+model EmailInvitation {
+  id             String                @id @default(cuid())
+  organizationId String
+  fromAddress    String
+  toAddress      String
+  subject        String
+  bodyText       String?
+  bodyHtml       String?
+  meetingUrl     String?               // Extracted meeting URL
+  platform       Platform?             // Detected platform
+  scheduledStart DateTime?
+  scheduledEnd   DateTime?
+  icsAttachment  String?               // Raw iCal attachment content
+  status         EmailInvitationStatus @default(PENDING)
+  meetingId      String?               // Linked meeting (if created)
+  error          String?
+  rawHeaders     Json?                 // Email headers
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  meeting      Meeting?     @relation(fields: [meetingId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([status])
+  @@index([meetingId])
+  @@index([createdAt])
+  @@map("email_invitations")
 }

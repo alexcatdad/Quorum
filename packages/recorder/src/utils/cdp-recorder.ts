@@ -1,6 +1,5 @@
-import type { Page, CDPSession } from "playwright";
-import { writeFile } from "node:fs/promises";
 import { createWriteStream, type WriteStream } from "node:fs";
+import type { CDPSession, Page } from "playwright";
 
 export class CDPRecorder {
 	private session: CDPSession | null = null;
@@ -53,9 +52,7 @@ export class CDPRecorder {
 				if (this.videoStream) {
 					this.videoStream.write(frameData);
 				}
-			} catch (error) {
-				console.error("Error processing screencast frame:", error);
-			}
+			} catch (_error) {}
 		});
 
 		this.isRecording = true;
@@ -65,22 +62,16 @@ export class CDPRecorder {
 		if (!this.isRecording || !this.session) {
 			return;
 		}
+		// Stop screencast
+		await this.session.send("Page.stopScreencast");
 
-		try {
-			// Stop screencast
-			await this.session.send("Page.stopScreencast");
-
-			// Close video stream
-			if (this.videoStream) {
-				this.videoStream.end();
-				this.videoStream = null;
-			}
-
-			this.isRecording = false;
-		} catch (error) {
-			console.error("Error stopping recording:", error);
-			throw error;
+		// Close video stream
+		if (this.videoStream) {
+			this.videoStream.end();
+			this.videoStream = null;
 		}
+
+		this.isRecording = false;
 	}
 
 	async close(): Promise<void> {
@@ -107,10 +98,7 @@ export class CDPRecorder {
  * Alternative implementation using Playwright's built-in video recording
  * This is more reliable than CDP for most use cases
  */
-export async function recordWithPlaywright(
-	page: Page,
-	durationSeconds: number,
-): Promise<string> {
+export async function recordWithPlaywright(page: Page, durationSeconds: number): Promise<string> {
 	// Wait for the specified duration
 	await page.waitForTimeout(durationSeconds * 1000);
 

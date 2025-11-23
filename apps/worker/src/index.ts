@@ -1,6 +1,6 @@
-import { createRecordingWorker, createEncodingWorker } from "../../api/src/services/queue";
-import { processRecordingJob } from "./processors/recording-processor";
+import { createEncodingWorker, createRecordingWorker } from "../../api/src/services/queue";
 import { processEncodingJob } from "./processors/encoding-processor";
+import { processRecordingJob } from "./processors/recording-processor";
 import { logger } from "./utils/logger";
 
 const env = {

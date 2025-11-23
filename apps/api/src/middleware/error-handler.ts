@@ -1,7 +1,7 @@
+import * as Sentry from "@sentry/bun";
 import type { Elysia } from "elysia";
 import { AppError } from "../types/errors";
 import { logger } from "../utils/logger";
-import * as Sentry from "@sentry/bun";
 
 export interface ErrorResponse {
 	error: {
